@@ -21,20 +21,6 @@
         }
         return f + "(" + args + ")";
       }
-      
-      $(function() {
-        $( "#yden-slider" ).slider({
-          range: true,
-          min: 0,
-          max: 500,
-          values: [ 75, 300 ],
-          slide: function( event, ui ) {
-            $( "#amount" ).val( "$" + ui.values[ 0 ] + " - $" + ui.values[ 1 ] );
-          }
-        });
-        $( "#amount" ).val( "$" + $( "#slider-range" ).slider( "values", 0 ) +
-          " - $" + $( "#slider-range" ).slider( "values", 1 ) );
-      });
     </script>
     
     <style>
@@ -72,6 +58,11 @@
       float: left;
     }
     #x-density-container {
+      float: left;
+    }
+    
+    
+    #y-density-slider {
       float: left;
     }
     
@@ -132,6 +123,7 @@
     <script type="text/javascript">
       // Create global variables
       var dataset; // Loaded from csv
+      var data;
       var kden;
       
       // Set max
@@ -242,7 +234,7 @@
         
         
         
-        
+        update(data);
         
         
         console.log(data);
@@ -372,11 +364,14 @@
         
         $( "#y-density-slider" ).slider({
           range: true,
-          min: d3.min(y_data),
-          max: d3.max(y_data),
-          values: [ 0, d3.max(y_data) ],
+          orientation: 'vertical',
+          height: scatter_height,
+          min: data.y.min,
+          max: data.y.max,
+          values: [0, data.y.max],
           slide: function( event, ui ) {
-            update(dataset, ui.values[0], ui.values[1]);
+            data.y.selected = {min: ui.values[0], max: ui.values[1]};
+            update(data);
           }
         });
         
@@ -386,7 +381,7 @@
       function update(data) {
         // Scatter
         var scatter_xScale = d3.scale.linear()
-                                .domain([0, data.x.selected.max)
+                                .domain([0, data.x.selected.max])
                                 .rangeRound([0, scatter_width])
                                 .nice();
         var scatter_yScale = d3.scale.linear()
@@ -426,6 +421,14 @@
             })
             .on("mouseover",function(d) { mouseOverCircle(d, x, y) });
         
+        // Add axes
+        scatter_svg.append("g")
+          .attr("class", "axis")
+          .attr("transform", _do("translate", 0, scatter_height))
+          .call(scatter_xAxis);
+        scatter_svg.append("g")
+          .attr("class", "axis")
+          .call(scatter_yAxis);
       }
       
       // Load CSV and run vis

@@ -7,8 +7,8 @@
     <script type="text/javascript" src="d3/d3.js"></script>
     <script type="text/javascript" src="d3/lib/science/science.min.js"></script>
     <script type="text/javascript" src="d3/lib/science/science.stats.min.js"></script>
-    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-    <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+    <!--<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>-->
     
     <script type="text/javascript">
       function _do(f) {
@@ -51,10 +51,10 @@
     }
     #scatter-container {
       float: left;
-      clear: right;
+      clear: left;
     }
     #corner-container {
-      clear: left;
+      clear: right;
       float: left;
     }
     #x-density-container {
@@ -108,7 +108,7 @@
         <div id="scatter-container" class="scatter plot-container">
         </div>
         <div id="y-density-container" class="y density plot-container">
-          <div id="y-density-slider" class="slider"></div>
+          <!--<div id="y-density-slider" class="slider"></div>-->
         </div>
         
         <div id="x-density-container" class="x density plot-container">
@@ -135,26 +135,20 @@
       var scatter_height = 500 - scatter_margin.top - scatter_margin.bottom;
       
       // Margins/Long-dim/Short-dim
-      // Since density plots have same dimensions, except one is rotated,
-      // I use long and short instead of width and height
       var density_margin = {top: 5, right: 40, bottom: 20, left: 5};
-      //var density_long_dim = (scatter_width);
-      //var density_short_dim = density_long_dim / 2;
       var xden_height = scatter_width / 5 - density_margin.top - density_margin.bottom;
       var yden_width = scatter_height / 5 - density_margin.left - density_margin.right;
       
       // Radius for points
       var r = scatter_width / 100;
       
-      function key(d) {
-        return d.tract_id
-      }
+      /*
       function validY(d) {
         if (typeof ymax !== 'undefined') {
           return (d < ymax);
         }
         return true;
-      }
+      }*/
       function validate(d, selected) {
         return (d >= selected.min && d <= selected.max);
       }
@@ -169,43 +163,97 @@
       
       // Create SVGs
       var scatter_svg = d3.select("#scatter-container")
-            .append("svg")
+          .append("svg")
             .attr("width", scatter_width + scatter_margin.left + scatter_margin.right)
             .attr("height", scatter_height + scatter_margin.top + scatter_margin.bottom)
-            .append("g")
+          .append("g")
             .attr("transform", _do("translate", scatter_margin.left, scatter_margin.top));
       
       // Create clip path
       scatter_svg.append("clipPath")
-          .attr("id", "scatter-clip")
+            .attr("id", "scatter-clip")
           .append("rect")
-          .attr("x", 0)
-          .attr("y", 0)
-          .attr("width", scatter_width)
-          .attr("height", scatter_height);
-            
+            .attr("x", 0)
+            .attr("y", 0)
+            .attr("width", scatter_width)
+            .attr("height", scatter_height);
+      
+      // Create density/corner SVGs    
       var xden_svg = d3.select("#x-density-container")
-            .append("svg")
+          .append("svg")
             .attr("width", scatter_width + scatter_margin.left + scatter_margin.right)
             .attr("height", xden_height + density_margin.top + density_margin.bottom)
-            .append("g")
+          .append("g")
             .attr("transform", _do("translate", scatter_margin.left, density_margin.top));
+      
       var yden_svg = d3.select("#y-density-container")
-            .append("svg")
+          .append("svg")
             .attr("width", yden_width + density_margin.left + density_margin.right)
             .attr("height", scatter_height + scatter_margin.top + scatter_margin.bottom)
-            .append("g")
+          .append("g")
             .attr("transform", _do("translate", density_margin.left, scatter_margin.top));
             
       var corner_svg = d3.select("#corner-container")
-            .append("svg")
+          .append("svg")
             .attr("width", yden_width + density_margin.left + density_margin.right)
             .attr("height", xden_height + density_margin.top + density_margin.bottom);
-            
+      
+      
+      // Initialize vis      
       function generateVis() {
         
+        function getX(d) {
+          return parseFloat(d[data.label.x]);
+        }
+        function getY(d) {
+          return parseFloat(d[data.label.y]);
+        }
         // Set up data object
         data = {
+          label: {
+            x: 'no_car_pct',
+            y: 'vehicle theft (rate)',
+            id: 'tract_id'
+          }
+        };
+        data.values = dataset.map(function(d) { return {
+            x: parseFloat(d[data.label.x]),
+            y: parseFloat(d[data.label.y]),
+            id: parseInt(d[data.label.id]),
+          }});
+        data.getValues = {
+          x: data.values.map(function(d) { return d.x }),
+          y: data.values.map(function(d) { return d.y }),
+          id: data.values.map(function(d) { return d.id })
+        };
+        /*data.getValue = {
+          x: function(d) { return parseFloat(d.x); },
+          y: function(d) { return parseFloat(d.y); },
+          id: function(d) { return parseFloat(d.id); }, 
+        };*/
+        
+        /*
+          x: dataset.map(function(d) { return parseFloat(d[data.label.x]); }),
+          y: dataset.map(function(d) { return parseFloat(d[data.label.y]); }),
+          id: dataset.map(function(d) { return parseFloat(d[data.label.id]); })
+        };*/
+        data.min = {
+          x: d3.min(data.getValues.x), //data.values.map(data.getValue.x)),
+          y: d3.min(data.getValues.y) // data.values.map(data.getValue.y))
+        };
+        data.max = {
+          x: d3.max(data.getValues.x), //data.values.map(data.getValue.x)),
+          y: d3.max(data.getValues.y) // data.values.map(data.getValue.y))
+        };
+        data.selected = {
+          x: {min: data.min.x, max: data.max.x},
+          y: {min: data.min.y, max: data.max.y}
+        };
+        data.kde = {
+          x: science.stats.kde().sample(data.getValues.x), //data.values.map(data.getValue.x)),
+          y: science.stats.kde().sample(data.getValues.y) //data.values.map(data.getValue.y))
+        };
+        /*
           x: {
             label: 'no_car_pct'
           },
@@ -230,7 +278,7 @@
         data.x.kde = science.stats.kde().sample(data.x.values); // create KDE functions
         data.y.kde = science.stats.kde().sample(data.y.values);
         
-        
+        */
         
         
         
@@ -238,6 +286,8 @@
         
         
         console.log(data);
+        
+        /*
         var x = 'no_car_pct';
         var y = 'vehicle theft (rate)';
         var x_data = dataset.map(function(d) { return parseFloat(d[x]); });
@@ -373,19 +423,20 @@
             data.y.selected = {min: ui.values[0], max: ui.values[1]};
             update(data);
           }
-        });
+        });*/
         
         
       }
       
       function update(data) {
         // Scatter
+        console.log
         var scatter_xScale = d3.scale.linear()
-                                .domain([0, data.x.selected.max])
+                                .domain([data.selected.x.min, data.selected.x.max])
                                 .rangeRound([0, scatter_width])
                                 .nice();
         var scatter_yScale = d3.scale.linear()
-                                .domain([0, data.y.selected.max])
+                                .domain([data.selected.y.min, data.selected.y.max])
                                 .rangeRound([scatter_height, 0])
                                 .nice();
         var scatter_xAxis = d3.svg.axis()
@@ -397,30 +448,62 @@
         
         // Add circles to scatter plot
         // DATA JOIN
+        /*
+        var circlesg = scatter_svg.append("g")
+                          .attr("id", "circles")
+                          .attr("clip-path", "url(#scatter-clip)");
+        var circles = circlesg
+                          .selectAll("circle")
+                          .data(data, function(d) { return d.id });
+        
+        scatter_svg.append("g")
+          .attr("id", "circles")
+          .attr("clip-path", "url(#scatter-clip)")
+          .selectAll("circle")
+          .data(data.values)
+          .enter()
+          .append("circle")
+          .attr({
+            cx: function(d, i) { console.log(d); return scatter_xScale(d.x); },
+            cy: function(d, i) { return scatter_yScale(d.y); },
+            r: r,
+            fill: "blue",
+            stroke: "darkblue",
+            "stroke-width": r/3,
+            "fill-opacity": .4,
+            "stroke-opacity": .6,
+          });*/
         var circles = scatter_svg.append("g")
                           .attr("id", "circles")
                           .attr("clip-path", "url(#scatter-clip)")
-                          .selectAll("circle")
-                          .data(data, function(d) { return d.id });
+                        .selectAll("circle")
+                          .data(data.values);
+                      
+        //console.log(circlesg);
+        //console.log(data);
+        
         
         // UPDATE
         circles.transition();
         
         // ENTER
         circles.enter()
-            .append("circle")
+          .append("circle")
             .attr({
-              cx: function(d, i) { return scatter_xScale(d.x); },
+              cx: function(d, i) { console.log(d); return scatter_xScale(d.x); },
               cy: function(d, i) { return scatter_yScale(d.y); },
-              r: r,
+              r: 0,
               fill: "blue",
               stroke: "darkblue",
               "stroke-width": r/3,
               "fill-opacity": .4,
               "stroke-opacity": .6,
             })
-            .on("mouseover",function(d) { mouseOverCircle(d, x, y) });
+            .on("mouseover",function(d) { mouseOverCircle(d, x, y) })
+            .transition()
+            .attr("r", r);
         
+        console.log(circles);
         // Add axes
         scatter_svg.append("g")
           .attr("class", "axis")
@@ -437,172 +520,14 @@
         if (error) {  // If error is not null, something went wrong.
           console.log(error);  // Log the error.
         } else {      // If no error, the file loaded correctly. Yay!
-          console.log(data);   // Log the data.
+          console.log("Data:", data);   // Log the data.
           
           //Include other code to execute after successful file load here
           dataset = data;
           generateVis();
           //hideLoadingMsg();
         }
-      });
-      
-      /*
-      var scatter_svg = d3.select("#scatter-container")
-            .append("svg")
-            .attr("width", (w + margin.left + margin.right) * (1 - den_dim_fraction))
-            .attr("height", (h + margin.top + margin.bottom) * (1 - den_dim_fraction))
-            .append("g")
-            .attr("transform", _do("translate", margin.left / 2, margin.top / 2));
-            //.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-            
-      var xden_svg = d3.select("#x-density-container")
-            .append("svg")
-            .attr("width", (w + margin.left + margin.right) * (1 - den_dim_fraction))
-            .attr("height", (h + margin.top + margin.bottom) * (den_dim_fraction))
-            .append("g")
-            .attr("transform", _do("translate", margin.left / 2, margin.top / 2));
-      var yden_svg = d3.select("#y-density-container")
-            .append("svg")
-            .attr("width", (w + margin.left + margin.right) * (den_dim_fraction))
-            .attr("height", (h + margin.top + margin.bottom) * (1 - den_dim_fraction))
-            .append("g")
-            .attr("transform", _do("translate", margin.left / 2, margin.top / 2));
-      
-      function mouseOver(i, id, x, y) {
-        d3.select(".tract").text(id + ": (X: " + x.toFixed(2) + ", Y: " + parseFloat(y).toFixed(2) + ")");
-        d3.select(".circle-" + i).classed("active", true);
-      }
-      function mouseOut(i) {
-        d3.select(".tract").text("");
-        d3.select(".circle-" + i).classed("active", false);
-      }
-      
-      function generateVis() {
-        var x = 'no_car_pct';
-        var y = 'vehicle theft (rate)';
-        var xScale = d3.scale.linear()
-                              .domain([0, d3.max(dataset, function(d) { return parseFloat(d[x]); })])
-                              .range([0, w * (1 - den_dim_fraction)])
-                              .nice();
-        var yScale = d3.scale.linear()
-                              .domain([0, d3.max(dataset, function(d) { return parseFloat(d[y]); })])
-                              .range([h * (1 - den_dim_fraction), 0])
-                              .nice();
-        var xAxis = d3.svg.axis()
-                    .scale(xScale)
-                    .orient("bottom");
-        //Define Y axis
-        var yAxis = d3.svg.axis()
-                  .scale(yScale)
-                  .orient("left")
-                  .ticks(5);
-        
-        circles = scatter_svg.selectAll("circle")
-                      .data(dataset, key)
-                      .enter()
-                      .append("circle");
-        circles.attr({
-          class: function(d, i) { return "circle-" + i; },
-          cx: function(d, i) { return xScale(parseFloat(d[x])); },
-          cy: function(d, i) { return yScale(parseFloat(d[y])); },
-          r: r,
-          fill: "blue",
-          stroke: "darkblue",
-          "stroke-width": r/3,
-          "fill-opacity": .2,
-          "stroke-opacity": .5,
-          onmouseover: function(d, i) { return _do("mouseOver", i, d['tract_id'], d[x], d[y]); },
-          onmouseout: function(d, i) { return "mouseOut(" + i + ")"; }
-          /*onmouseover: function(d, i) { return "mouseOver(" + d['tract_id'] + ", " + i + ")"; },
-          onmouseout: function(d, i) { return "mouseOut(" + i + ")"; }*/
-        /*
-        });
-        
-        scatter_svg.append("g")
-          .attr("class", "axis")
-          .attr("transform", _do("translate", 0, h))
-          .call(xAxis);
-        scatter_svg.append("g")
-          .attr("class", "axis")
-          .call(yAxis);
-          
-          
-        // Density
-        var xDenScale = d3.scale.linear()
-                              .domain([0, d3.max(dataset, function(d) { return parseFloat(d[x]); })])
-                              .range([0, w])
-                              .nice();
-        var xDenScale2 = d3.scale.linear()
-                              .domain([0, d3.max(dataset, function(d) { return parseFloat(d[y]); })])
-                              .range([0, w])
-                              .nice();
-        var yDenScale = d3.scale.linear()
-                              .domain([0, d3.max(kden(x_data), function(d) { return parseFloat(d[1]); })])
-                              .range([h/2, 0])
-                              .nice();
-        
-        var xLine = d3.svg.line()
-          .x(function(d) { return xDenScale(d[0]); })
-          .y(function(d) { return yDenScale(d[1]); });
-        xden_svg.append("path")
-          .datum(kden(x_data).sort(function(a,b) { return a[0]-b[0]; }))
-          .attr("class", "line")
-          .attr("transform", _do("translate", 0, h/2))
-          .attr("d", xLine);
-        var yLine = d3.svg.line()
-          .x(function(d) { return yDenScale2(d[1]); })
-          .y(function(d) { return xDenScale(d[0]); });
-        kden2 = science.stats.kde().sample(y_data);
-        var yDenScale = d3.scale.linear()
-                              .domain([0, d3.max(kden2(y_data), function(d) { return parseFloat(d[1]); })])
-                              .range([h/2, 0])
-                              .nice();
-        yden_svg.append("path")
-          .datum(kden2(y_data).sort(function(a,b) { return a[0]-b[0]; }))
-          .attr("class", "line")
-          .attr("transform", _do("translate", 0, 0))
-          .attr("d", yLine);
-        
-        xden_svg.append("g")
-          .attr("class", "axis")
-          .attr("transform", _do("translate", 0, h))
-          .call(xAxis);
-        
-      }
-      /*
-      d3.json("SF_tracts_50p.json", function(json) {
-        var projection = d3.geo.mercator()
-                          .center([-122.4, 37.8])
-                          .scale(50000);
-                        //.clipExtent([[-122.612285,37.706721],[-122.28178,37.929823999999996]]);
-        var path = d3.geo.path().projection(projection);
-        console.log(json.geometries);
-        console.log(projection);
-        svg.selectAll("path")
-           .data(json.geometries)
-           .enter()
-           .append("path")
-           .attr("d", path);
-      });*/
-/*
-      d3.csv("test.csv", function(error, data) {
-      
-        if (error) {  //If error is not null, something went wrong.
-          console.log(error);  //Log the error.
-        } else {      //If no error, the file loaded correctly. Yay!
-          console.log(data);   //Log the data.
-          
-          //Include other code to execute after successful file load here
-          dataset = data;
-          x_data = dataset.map(function(x) { return parseFloat(x['no_car_pct']); });
-          y_data = dataset.map(function(x) { return parseFloat(x['vehicle theft (rate)']); });
-          //dataset.map(function(x) { return parseFloat(x['no_car_pct']); }));
-          kden = science.stats.kde().sample(x_data);
-          generateVis();
-          //hideLoadingMsg();
-        }
-      });*/
-      
+      });      
     </script>
   </body>
 </html>

@@ -161,16 +161,13 @@
       // Radius for points
       var r = scatter_width / 100;
       
-      /*
-      function validY(d) {
-        if (typeof ymax !== 'undefined') {
-          return (d < ymax);
-        }
-        return true;
-      }*/
-      function validate(d, selected) {
-        return (d >= selected.min && d <= selected.max);
-      }
+      
+      var scatter_xScale = d3.scale.linear();
+      var scatter_xAxis = d3.svg.axis().scale(scatter_xScale).orient("bottom");
+      
+      var scatter_yScale = d3.scale.linear();
+      var scatter_yAxis = d3.svg.axis().scale(scatter_yScale).orient("left");
+      
       
       // Make interaction functions
       function mouseOverCircle(d) {
@@ -196,6 +193,16 @@
             .attr("y", 0)
             .attr("width", scatter_width)
             .attr("height", scatter_height);
+      
+      var circlesg = scatter_svg.append("g")
+                          .attr("id", "circles")
+                          .attr("clip-path", "url(#scatter-clip)");
+                        //.selectAll("circle");
+                        
+      var circles;
+      scatter_svg.append("g")
+          .attr("class", "axis x-axis")
+          .attr("transform", _do("translate", 0, scatter_height));
       
       // Create density/corner SVGs    
       var xden_svg = d3.select("#x-density-container")
@@ -260,9 +267,9 @@
         };
         
         // A function returning the selected values
-        field.selected.getValues = function() {
+        /*field.selected.getValues = function() {
           return field.values.filter(field.selected.selector);
-        };
+        };*/
         
         return field;
       }
@@ -286,202 +293,19 @@
                         };
                       });
         
+        data.isSelected = function(d) {
+          return (data.x.selected.min <= d.x && d.x <= data.x.selected.max);
+        };
+        /*data.selected_data = function() { return data.data.filter(function(d) {
+          return (data.x.selected.min <= d.x && d.x <= data.x.selected.max) ;
+        }) };*/
         data.x.kde = science.stats.kde().sample(data.x.values);
         data.y.kde = science.stats.kde().sample(data.y.values);
-        /*
-        function getX(d) {
-          return parseFloat(d[data.label.x]);
-        }
-        function getY(d) {
-          return parseFloat(d[data.label.y]);
-        }
-        // Set up data object
-        data = {
-          label: {
-            x: 'no_car_pct',
-            y: 'vehicle theft (rate)',
-            id: 'tract_id'
-          }
-        };
         
-        // An array of objects, with variables as keys -> values
-        // e.g. [ {x: 1, y: 2, id: 001}, {x:3, y:-1, id:002} ... ]
-        data.values = dataset.map(function(d) { return {
-            x: parseFloat(d[data.label.x]),
-            y: parseFloat(d[data.label.y]),
-            id: parseInt(d[data.label.id]),
-          }});
-        
-        data.getValues = {
-          x: data.values.map(function(d) { return d.x }),
-          y: data.values.map(function(d) { return d.y }),
-          id: data.values.map(function(d) { return d.id })
-        };
-        
-        data.min = {
-          x: d3.min(data.getValues.x), //data.values.map(data.getValue.x)),
-          y: d3.min(data.getValues.y) // data.values.map(data.getValue.y))
-        };
-        
-        data.max = {
-          x: d3.max(data.getValues.x), //data.values.map(data.getValue.x)),
-          y: d3.max(data.getValues.y) // data.values.map(data.getValue.y))
-        };
-        
-        data.selected = {
-          x: {min: data.min.x, max: data.max.x},
-          y: {min: data.min.y, max: data.max.y}
-        };
-        
-        data.kde = {
-          x: science.stats.kde().sample(data.getValues.x), //data.values.map(data.getValue.x)),
-          y: science.stats.kde().sample(data.getValues.y) //data.values.map(data.getValue.y))
-        };
-        */
         update(data);
         
         
         console.log(data);
-        
-        /*
-        var x = 'no_car_pct';
-        var y = 'vehicle theft (rate)';
-        var x_data = dataset.map(function(d) { return parseFloat(d[x]); });
-        var y_data = dataset.map(function(d) { return parseFloat(d[y]); });
-        
-        var valid_y_data = y_data.filter(validY)
-                                         
-        
-        // Create Kernel Density functions
-        x_kde = science.stats.kde().sample(x_data);
-        y_kde = science.stats.kde().sample(y_data);
-        
-        
-        // Create scales for each plot
-        var scatter_xScale = d3.scale.linear()
-                              .domain([0, d3.max(x_data)])
-                              .rangeRound([0, scatter_width])
-                              .nice();
-        var scatter_yScale = d3.scale.linear()
-                              .domain([0, d3.max(valid_y_data)])
-                              .rangeRound([scatter_height, 0])
-                              .nice();
-        var xden_xScale = d3.scale.linear()
-                              .domain([0, d3.max(x_kde(x_data), function(d) { return d[0]; })])
-                              .range([0, scatter_width])
-                              .nice();
-        var xden_yScale = d3.scale.linear()
-                              .domain([0, d3.max(x_kde(x_data), function(d) { return d[1] })])
-                              .range([xden_height, 0])
-                              .nice();
-        var yden_yScale = d3.scale.linear()
-                              .domain([0, d3.max(y_kde(y_data), function(d) { return d[0]; })])
-                              .range([scatter_height, 0])
-                              .nice();
-        var yden_xScale = d3.scale.linear()
-                              .domain([0, d3.max(y_kde(y_data), function(d) { return d[1]; })])
-                              .range([yden_width, 0])
-                              .nice();
-        
-        // Create axes
-        var scatter_xAxis = d3.svg.axis()
-                    .scale(scatter_xScale)
-                    .orient("bottom");
-        var scatter_yAxis = d3.svg.axis()
-                  .scale(scatter_yScale)
-                  .orient("left");
-                  
-        var yden_xAxis = d3.svg.axis()
-                .scale(yden_yScale)
-                .orient("right");
-        
-        // Create clip path
-        scatter_svg.append("clipPath")
-          .attr("id", "scatter-clip")
-          .append("rect")
-          .attr("x", 0)
-          .attr("y", 0)
-          .attr("width", scatter_width)
-          .attr("height", scatter_height);
-          
-        // Add circles to scatter plot
-        scatter_svg.append("g")
-          .attr("id", "circles")
-          .attr("clip-path", "url(#scatter-clip)")
-          .selectAll("circle")
-          .data(dataset, key)
-          .enter()
-          .append("circle")
-          .attr({
-            cx: function(d, i) { return scatter_xScale(parseFloat(d[x])); },
-            cy: function(d, i) { return scatter_yScale(parseFloat(d[y])); },
-            r: r,
-            fill: "blue",
-            stroke: "darkblue",
-            "stroke-width": r/3,
-            "fill-opacity": .4,
-            "stroke-opacity": .6,
-          });
-        // Create mouseover effect
-        d3.selectAll("circle")
-          .on("mouseover",function(d) { mouseOverCircle(d, x, y) });
-        
-        
-        
-        // Create density paths
-        var xden_line = d3.svg.line()
-            .x(function(d) { return xden_xScale(d[0]); })
-            .y(function(d) { return xden_yScale(d[1]); });
-            
-        xden_svg.append("path")
-          .datum(x_kde(x_data).sort(function(a,b) { return a[0]-b[0]; }))
-          .attr("class", "line")
-          .attr("d", xden_line);
-          
-        var yden_line = d3.svg.line()
-            .x(function(d) { return yden_xScale(d[1]); })
-            .y(function(d) { return yden_yScale(d[0]); });
-            
-        yden_svg.append("path")
-          .datum(y_kde(y_data).sort(function(a,b) { return a[0]-b[0]; }))
-          .attr("class", "line")
-          .attr("d", yden_line);
-          
-          
-          
-        // Add axes
-        scatter_svg.append("g")
-          .attr("class", "axis")
-          .attr("transform", _do("translate", 0, scatter_height))
-          .call(scatter_xAxis);
-        scatter_svg.append("g")
-          .attr("class", "axis")
-          .call(scatter_yAxis);
-          
-        xden_svg.append("g")
-          .attr("class", "axis")
-          .attr("transform", _do("translate", 0, xden_height))
-          .call(scatter_xAxis);
-          
-        yden_svg.append("g")
-          .attr("class", "axis")
-          .attr("transform", _do("translate", yden_width, 0))
-          .call(yden_xAxis);
-        
-        $( "#y-density-slider" ).slider({
-          range: true,
-          orientation: 'vertical',
-          height: scatter_height,
-          min: data.y.min,
-          max: data.y.max,
-          values: [0, data.y.max],
-          slide: function( event, ui ) {
-            data.y.selected = {min: ui.values[0], max: ui.values[1]};
-            update(data);
-          }
-        });*/
-        
-        
       }
       
       function update(data) {
@@ -496,29 +320,27 @@
         // X and Y scales translate:
         // [ min selected x/y value, max selected x/y value]
         // to output range
-        var scatter_xScale = d3.scale.linear()
-                                .domain([data.x.selected.min, data.x.selected.max])
-                                .rangeRound([0, scatter_width])
-                                .nice();
-        var scatter_yScale = d3.scale.linear()
-                                .domain([data.y.selected.min, data.y.selected.max])
-                                .rangeRound([scatter_height, 0])
-                                .nice();
+        //var scatter_xScale = d3.scale.linear()
+                                scatter_xScale.domain([data.x.selected.min, data.x.selected.max])
+                                .range([0, scatter_width]);
+        //var scatter_yScale = d3.scale.linear()
+                                scatter_yScale.domain([data.y.selected.min, data.y.selected.max])
+                                .range([scatter_height, 0]);
         // AXES                        
-        var scatter_xAxis = d3.svg.axis()
+        /*var scatter_xAxis = d3.svg.axis()
                                 .scale(scatter_xScale)
                                 .orient("bottom");
         var scatter_yAxis = d3.svg.axis()
                                 .scale(scatter_yScale)
                                 .orient("left");
-        
+        */
         // Add circles to scatter plot
         // DATA JOIN
-        var circles = scatter_svg.append("g")
+        /*var circles = scatter_svg.append("g")
                           .attr("id", "circles")
                           .attr("clip-path", "url(#scatter-clip)")
-                        .selectAll("circle")
-                          .data(data.data);
+                        .selectAll("circle")*/
+                          circles = circlesg.selectAll("circle").data(data.data);//.filter(data.isSelected));
         
         // UPDATE
         //circles.transition();
@@ -526,9 +348,12 @@
         // ENTER
         circles.enter()
           .append("circle")
+            //.attr(
+              //"cx", function(d, i) { console.log(i + ": " + d.x + " -> " + scatter_xScale(d.x)); return scatter_xScale(d.x); }
+              //)
             .attr({
-              cx: function(d, i) { return scatter_xScale(d.x); },
-              cy: function(d, i) { return scatter_yScale(d.y); },
+              //cx: function(d, i) { return scatter_xScale(d.x); },
+              //cy: function(d, i) { return scatter_yScale(d.y); },
               r: 0,
               fill: "blue",
               stroke: "darkblue",
@@ -540,6 +365,9 @@
             .transition()
               .attr("r", r);
         
+        circles.attr("cx", function(d, i) { console.log(i + ": " + d.x + " -> " + scatter_xScale(d.x)); return scatter_xScale(d.x); });
+        circles.attr("cy", function(d, i) { return scatter_yScale(d.y); });
+        
         // EXIT
         circles.exit()
             .transition()
@@ -549,13 +377,17 @@
         
         
         // Add axes
+        /*scatter_svg.append("g")
+          .attr("class", "axis x-axis")
+          .attr("transform", _do("translate", 0, scatter_height))*/
+        scatter_svg.select(".x-axis").call(scatter_xAxis);
         scatter_svg.append("g")
-          .attr("class", "axis")
-          .attr("transform", _do("translate", 0, scatter_height))
-          .call(scatter_xAxis);
-        scatter_svg.append("g")
-          .attr("class", "axis")
+          .attr("class", "axis y-axis")
           .call(scatter_yAxis);
+      }
+      
+      function updateCircles(data) {
+        circles.selectAll("circle");
       }
       
       function updateDensity(data) {
@@ -569,8 +401,8 @@
         // to the output range. I.e., they don't use SELECTED values.        
         var xden_xScale = d3.scale.linear()
                               .domain([0, d3.max(xden_data, function(d) { return d[0]; })])
-                              .range([0, scatter_width])
-                              .nice();
+                              .range([0, scatter_width]);
+                              //.nice();
         var xden_yScale = d3.scale.linear()
                               .domain([0, d3.max(xden_data, function(d) { return d[1] })])
                               .range([xden_height, 0])
@@ -582,8 +414,8 @@
                               .nice();
         var yden_yScale = d3.scale.linear() // note that "y" value is HORRIZONTAL
                               .domain([0, d3.max(yden_data, function(d) { return d[0]; })])
-                              .range([scatter_height, 0])
-                              .nice();
+                              .range([scatter_height, 0]);
+                              //.nice();
                               
         // AXES
         var xden_xAxis = d3.svg.axis()
@@ -654,6 +486,8 @@
         var xden_brushg = xden_svg.append("g")
           .attr("class", "brush")
           .call(xden_brush);
+        xden_brushg.selectAll("rect")
+          .attr("height", xden_height);
           
         xden_brushg.selectAll(".resize").append("path")
           .attr("transform", "translate(0," +  xden_height / 2 + ")")
@@ -670,24 +504,46 @@
         
             
         function brushstart() {
+          console.log("brushstart");
           xden_svg.classed("selecting", true);
         }
         
         function brushmove() {
+          console.log("brushmove");
           var s = xden_brush.extent();
-          console.log(s);
           data.x.selected.min = s[0];
           data.x.selected.max = s[1];
-          //update(data);
+          
+          scatter_xScale.domain(s);
+          scatter_svg.selectAll("circle").transition()
+              .attr("cx", function(d) { return scatter_xScale(d.x)});
+          
+          scatter_svg.select(".x-axis").call(scatter_xAxis);
+          //updateScatter(data);
           //circles.classed("selected", function(d) { return s[0] <= d.x && d.x <= s[1]; });
         }
         
         function brushend() {
+          console.log("brushend");
           //svg.classed("selecting", !d3.event.target.empty());
-          var s = xden_brush.extent();
-          //data.x.selected.min = s[0];
-          //data.x.selected.max = s[1];
-          update(data);
+          if (!d3.event.target.empty()) {
+            var s = xden_brush.extent();
+            console.log(s);
+            
+            data.x.selected.min = s[0];
+            data.x.selected.max = s[1];
+            updateScatter(data);
+          } else {
+            console.log("target empty");
+            data.x.selected.min = d3.min(data.x.values);
+            data.x.selected.max = d3.max(data.x.values);
+            updateScatter(data);
+          }
+          
+          //scatter_xScale.domain(s);
+          //scatter_svg.select(".x-axis").call(scatter_xAxis);
+          //scatter_svg.selectAll("circle").transition()
+          //    .attr("cx", function(d) { return scatter_xScale(d.x)});
           //generateVis();
         }
 

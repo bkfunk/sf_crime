@@ -135,8 +135,8 @@
     }
     .line {
       fill: none;
-      stroke: #000;
-      stroke-width: 2px;
+      stroke: #999;
+      stroke-width: 1px;
     }
     
     .area {
@@ -147,9 +147,9 @@
     
     #xden-highlight .line,
     #yden-highlight .line {
-      stroke-width: 6px;
-      stroke: blue;
-      stroke-opacity: .2;
+      stroke-width: 2px;
+      stroke: #000;
+      stroke-opacity: 1;
     }
     
     .brush .extent {
@@ -334,10 +334,47 @@
       var xden_select_line_path = xden_highlight.append("path");
       var yden_select_line_path = yden_highlight.append("path");
             
-      var arc = d3.svg.arc()
+      var xden_select_handle = d3.svg.arc()
           .outerRadius(xden_height / 8)
           .startAngle(0)
           .endAngle(function(d, i) { return i ? -Math.PI : Math.PI; });
+      var yden_select_handle = d3.svg.arc()
+          .outerRadius(yden_width / 8)
+          .startAngle(Math.PI / 2)
+          .endAngle(function(d, i) { return i ? -Math.PI / 2 : 3/2 * Math.PI; });
+      
+      
+      var xden_brush = d3.svg.brush();
+            //.x(xden_xScale)
+            //.extent([data.x.selected.min, data.x.selected.max])
+            //.on("brushstart", brushstart)
+            //.on("brush", brushmove)
+            //.on("brushend", brushend);
+            
+        var xden_brushg = xden_svg.append("g")
+          .attr("class", "brush")
+          //.call(xden_brush);
+        xden_brushg.selectAll("rect")
+          .attr("height", xden_height);
+        
+        
+        var yden_brush = d3.svg.brush();
+            //.x(xden_xScale)
+            //.extent([data.x.selected.min, data.x.selected.max])
+            //.on("brushstart", brushstart)
+            //.on("brush", brushmove)
+            //.on("brushend", brushend);
+            
+        var yden_brushg = yden_svg.append("g")
+          .attr("class", "brush")
+          //.call(xden_brush);
+        yden_brushg.selectAll("rect")
+          .attr("width", yden_width);
+        
+        /*  
+        xden_brushg.selectAll(".resize").append("path")
+          .attr("transform", "translate(0," +  xden_height / 2 + ")")
+          .attr("d", arc);*/
       
       
       // Make interaction functions
@@ -420,6 +457,11 @@
         scatter_svg.select(".y-axis").call(scatter_yAxis);
       }
       
+      function updateScatterCirclePositions() {
+        circles.attr("cx", function(d, i) { (i < 5) ? console.log(i + ": " + d.x + " -> " + scatter_xScale(d.x)) : null; return scatter_xScale(d.x); });
+        circles.attr("cy", function(d, i) { return scatter_yScale(d.y); });
+      }
+      
       function updateScatterCircles() {
         // ENTER
         circles.enter()
@@ -441,9 +483,11 @@
             .transition()
               .attr("r", r);
         
-        circles.attr("cx", function(d, i) { console.log(i + ": " + d.x + " -> " + scatter_xScale(d.x)); return scatter_xScale(d.x); });
-        circles.attr("cy", function(d, i) { return scatter_yScale(d.y); });
-        
+        console.log(data);
+        console.log("scale: " + scatter_xScale(0) + " to " + scatter_xScale(92));
+        //circles.attr("cx", function(d, i) { (i < 5) ? console.log(i + ": " + d.x + " -> " + scatter_xScale(d.x)) : null; return scatter_xScale(d.x); });
+        //circles.attr("cy", function(d, i) { return scatter_yScale(d.y); });
+        updateScatterCirclePositions();
         // EXIT
         circles.exit()
             .transition()
@@ -454,9 +498,9 @@
       
       function updateDensityAxes() {
         xden_xScale.domain([0, d3.max(data.x.density.values, function(d) { return d.x; })]);
-        xden_yScale.domain([0, d3.max(data.x.density.values, function(d) { return d.y })])
+        xden_yScale.domain([0, 1.1 * d3.max(data.x.density.values, function(d) { return d.y })])
         
-        yden_xScale.domain([0, d3.max(data.y.density.values, function(d) { return d.y; })]);
+        yden_xScale.domain([0, 1.1 * d3.max(data.y.density.values, function(d) { return d.y; })]);
         yden_yScale.domain([0, d3.max(data.y.density.values, function(d) { return d.x; })])
         
         xden_svg.select(".xden-x-axis").call(xden_xAxis);
@@ -507,7 +551,7 @@
             .attr("class", "area")
             .attr("d", xden_select_area);
 
-        xden_select_line_path.datum(data.x.density.sortedValues)
+        xden_select_line_path.datum(data.x.density.sortedValues.filter(data.isSelected))
           .attr("class", "line")
           .attr("d", xden_select_line);
         
@@ -518,47 +562,74 @@
           .attr("class", "line")
           .attr("d", yden_select_line);
         
-        var xden_brush = d3.svg.brush()
-            .x(xden_xScale)
+        //var xden_brush = d3.svg.brush()
+        xden_brush.x(xden_xScale)
             .extent([data.x.selected.min, data.x.selected.max])
-            .on("brushstart", brushstart)
-            .on("brush", brushmove)
-            .on("brushend", brushend);
+            .on("brushstart", xbrushstart)
+            .on("brush", xbrushmove)
+            .on("brushend", xbrushend);
             
-        var xden_brushg = xden_svg.append("g")
-          .attr("class", "brush")
-          .call(xden_brush);
+        yden_brush.y(yden_yScale)
+            .extent([data.y.selected.min, data.y.selected.max])
+            .on("brushstart", ybrushstart)
+            .on("brush", ybrushmove)
+            .on("brushend", ybrushend);
+            
+        //var xden_brushg = xden_svg.append("g")
+          //.attr("class", "brush")
+        xden_brushg.call(xden_brush);
         xden_brushg.selectAll("rect")
           .attr("height", xden_height);
           
+        yden_brushg.call(yden_brush);
+        yden_brushg.selectAll("rect")
+          .attr("width", yden_width);
+        
         xden_brushg.selectAll(".resize").append("path")
           .attr("transform", "translate(0," +  xden_height / 2 + ")")
-          .attr("d", arc);
-          
+          .attr("d", xden_select_handle);
+        yden_brushg.selectAll(".resize").append("path")
+          .attr("transform", "translate(" + yden_width / 2 + ", 0)")
+          .attr("d", yden_select_handle);
+        
 
             
-        function brushstart() {
-          console.log("brushstart");
-          xden_svg.classed("selecting", true);
+        function xbrushstart() {
+          
         }
         
-        function brushmove() {
-          console.log("brushmove");
+        function xbrushmove() {
+          console.log("start brushmove:");
+          if (!d3.event.target.empty()) {
+            var s = xden_brush.extent();
+            data.x.selected.min = s[0];
+            data.x.selected.max = s[1];
+          } else {
+            console.log("target empty");
+            data.x.selected.min = d3.min(data.x.values);
+            data.x.selected.max = d3.max(data.x.values);
+          }
+          /*
           var s = xden_brush.extent();
+          console.log(xden_brush.extent());
           data.x.selected.min = s[0];
           data.x.selected.max = s[1];
+          */
+          //scatter_xScale.domain([data.x.selected.min, data.x.selected.max]);
+          //scatter_svg.selectAll("circle").transition()
+            //  .attr("cx", function(d, i) { (i < 5) ? console.log(i + ": " + d.x + " -> " + scatter_xScale(d.x)) : null; return scatter_xScale(d.x)});
           
-          scatter_xScale.domain(s);
-          scatter_svg.selectAll("circle").transition()
-              .attr("cx", function(d) { return scatter_xScale(d.x)});
-          
-          scatter_svg.select(".x-axis").call(scatter_xAxis);
+          //scatter_svg.select(".x-axis").call(scatter_xAxis);
           //updateScatter(data);
           //circles.classed("selected", function(d) { return s[0] <= d.x && d.x <= s[1]; });
+          updateScatterAxes()
+          updateScatterCirclePositions();
+          console.log("end brushmove:");
+          console.log(xden_brush.extent());
         }
         
-        function brushend() {
-          console.log("brushend");
+        function xbrushend() {
+          console.log("start brushend");
           //svg.classed("selecting", !d3.event.target.empty());
           if (!d3.event.target.empty()) {
             var s = xden_brush.extent();
@@ -571,9 +642,89 @@
             data.x.selected.min = d3.min(data.x.values);
             data.x.selected.max = d3.max(data.x.values);
           }
-          
-          updateScatterCircles();
+          updateScatterAxes();
+          //updateScatterCircles();
+          updateScatterCirclePositions();
           updateDensity();
+          console.log("end brushend:");
+          console.log(xden_brush.extent());
+          console.log(data.x.selected);
+          
+          //scatter_xScale.domain(s);
+          //scatter_svg.select(".x-axis").call(scatter_xAxis);
+          //scatter_svg.selectAll("circle").transition()
+          //    .attr("cx", function(d) { return scatter_xScale(d.x)});
+          //generateVis();
+        }
+        
+        function ybrushstart() {
+          console.log("brushstart");
+          var target = d3.event.target;
+          for (var key in target) {
+            console.log(key);
+            if (target.hasOwnProperty(key)) {
+              console.log(key + ": " + typeof target[key]);
+            } else {
+              console.log(key);
+            }
+          }
+          console.log(d3.select(this));
+        }
+        
+        function ybrushmove() {
+          //console.log("start brushmove:");
+          if (!d3.event.target.empty()) {
+            var s = yden_brush.extent();
+            console.log(s);
+            
+            data.y.selected.min = s[0];
+            data.y.selected.max = s[1];
+          } else {
+            //console.log("target empty");
+            data.y.selected.min = d3.min(data.y.values);
+            data.y.selected.max = d3.max(data.y.values);
+          }
+          /*
+          var s = xden_brush.extent();
+          console.log(xden_brush.extent());
+          data.x.selected.min = s[0];
+          data.x.selected.max = s[1];
+          */
+          //scatter_xScale.domain([data.x.selected.min, data.x.selected.max]);
+          //scatter_svg.selectAll("circle").transition()
+            //  .attr("cx", function(d, i) { (i < 5) ? console.log(i + ": " + d.x + " -> " + scatter_xScale(d.x)) : null; return scatter_xScale(d.x)});
+          
+          //scatter_svg.select(".x-axis").call(scatter_xAxis);
+          //updateScatter(data);
+          //circles.classed("selected", function(d) { return s[0] <= d.x && d.x <= s[1]; });
+          updateScatterAxes()
+          updateScatterCirclePositions();
+          //console.log("end brushmove:");
+          //console.log(yden_brush.extent());
+        }
+        
+        function ybrushend() {
+          //console.log("start brushend");
+          //svg.classed("selecting", !d3.event.target.empty());
+          if (!d3.event.target.empty()) {
+            var s = yden_brush.extent();
+            console.log(s);
+            
+            data.y.selected.min = s[0];
+            data.y.selected.max = s[1];
+          } else {
+            console.log("target empty");
+            data.y.selected.min = d3.min(data.y.values);
+            data.y.selected.max = d3.max(data.y.values);
+          }
+          updateScatterAxes();
+          //updateScatterCircles();
+          updateScatterCirclePositions();
+          updateDensity();
+          //console.log("end brushend:");
+          //console.log(yden_brush.extent());
+          //console.log(data.y.selected);
+          
           //scatter_xScale.domain(s);
           //scatter_svg.select(".x-axis").call(scatter_xAxis);
           //scatter_svg.selectAll("circle").transition()

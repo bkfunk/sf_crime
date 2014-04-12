@@ -4,15 +4,18 @@
     <meta charset="utf-8">
     <title>D3 Test</title>
     <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/cupertino/jquery-ui.css">-->
-    <script type="text/javascript" src="lib/d3/d3.js"></script>
+    <link rel="stylesheet" href="style/style.css">
+    <script type="text/javascript" src="lib/d3/d3.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/science/science.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/science/science.stats.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/colorbrewer/colorbrewer.js"></script>
     <script type="text/javascript" src="lib/topojson/topojson.v1.min.js"></script>
-    <!--<script src="http://d3js.org/d3.v3.min.js"></script>
-    <script src="http://d3js.org/topojson.v1.min.js"></script>-->
+    <script type="text/javascript" src="lib/queue/queue.min.js"></script>
+    <script type="text/javascript" src="lib/charts/density.js"></script>
+    <script type="text/javascript" src="lib/charts/scatter.js"></script>
     <!--<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
     <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>-->
+    <!--<script src="http://d3js.org/queue.v1.min.js"></script>-->
     
     <script type="text/javascript">
       function _do(f) {
@@ -67,105 +70,6 @@
         return field;
       }
     </script>
-    
-    <style>
-    
-    .tract-06075030800 {
-      stroke: red;
-    }
-    #main {
-      clear: both;
-      float: left;
-      margin: auto;
-    }
-    #info {
-      clear: both;
-      margin: auto;
-      text-align: center;
-      height: 1.2em;
-    }
-    #scatter-group-container {
-      float: left;
-      width: 600px;
-      height: 600px;
-      border: 1px solid blue;
-    }
-    #map-group-container {
-      float: left;
-      width: 600px;
-      height: 600px;
-      border: 1px solid gray;
-    }
-    #y-density-container {
-      float: left;
-    }
-    #scatter-container {
-      float: left;
-      clear: left;
-    }
-    #corner-container {
-      clear: right;
-      float: left;
-    }
-    #x-density-container {
-      float: left;
-    }
-    
-    
-    #y-density-slider {
-      float: left;
-    }
-    
-    
-    circle {
-      opacity: .3;
-    }
-    circle:hover {
-      opacity: 1;
-    }
-    .text {
-      clear: both;
-    }
-    svg {
-      float: left;
-      border: 1px dashed lightgray;
-    }
-    .axis path,
-    .axis line {
-        fill: none;
-        stroke: black;
-        shape-rendering: crispEdges;
-    }
-    
-    .axis text {
-        font-family: sans-serif;
-        font-size: 11px;
-    }
-    .line {
-      fill: none;
-      stroke: #999;
-      stroke-width: 1px;
-    }
-    
-    .area {
-      fill: lightblue;
-      stroke-width: 0;
-      fill-opacity: .5;
-    }
-    
-    #xden-highlight .line,
-    #yden-highlight .line {
-      stroke-width: 2px;
-      stroke: #000;
-      stroke-opacity: 1;
-    }
-    
-    .brush .extent {
-      stroke: #fff;
-      fill-opacity: .125;
-      shape-rendering: crispEdges;
-    }
-    </style>
   </head>
   <body>
     <div id="main">
@@ -176,12 +80,13 @@
         
         <div id="scatter-container" class="scatter plot-container">
         </div>
+        
         <div id="y-density-container" class="y density plot-container">
-          <!--<div id="y-density-slider" class="slider"></div>-->
         </div>
         
         <div id="x-density-container" class="x density plot-container">
         </div>
+        
         <div id="corner-container">
         </div>
       </div>
@@ -190,9 +95,15 @@
     </div>
     
     <script type="text/javascript">
-    var color;
+    
+      var scatter = scatterPlot();
+      var xden = densityPlot();
+    
+      var color;
       // Create global variables
       var dataset; // Loaded from csv, contains all variables
+      var mapdata; // Loaded from topojson
+      var tracts;
       var data; // Contains only the data for a particular plot
       var kden;
       
@@ -212,10 +123,12 @@
       
       
     /* SCATTER PLOT */
-      var scatter_xScale = d3.scale.linear();
+      var scatter_xScale = d3.scale.linear()
+                              .range([0, scatter_width]);
       var scatter_xAxis = d3.svg.axis().scale(scatter_xScale).orient("bottom");
       
-      var scatter_yScale = d3.scale.linear();
+      var scatter_yScale = d3.scale.linear()
+                              .range([scatter_height, 0]);
       var scatter_yAxis = d3.svg.axis().scale(scatter_yScale).orient("left");
       
       var scatter_svg = d3.select("#scatter-container")
@@ -234,19 +147,20 @@
             .attr("width", scatter_width)
             .attr("height", scatter_height);
       
+      // Create group for circles
       var circlesg = scatter_svg.append("g")
                           .attr("id", "circles")
                           .attr("clip-path", "url(#scatter-clip)");
                         
       var circles;
       
+      // Add axes to SVG
       scatter_svg.append("g")
           .attr("class", "axis x-axis")
           .attr("transform", _do("translate", 0, scatter_height));
       
       scatter_svg.append("g")
           .attr("class", "axis y-axis");
-          //.attr("transform", _do("translate", 0, 0));
       
       
     /* DENSITY PLOTS */
@@ -293,10 +207,13 @@
             .range([0, scatter_width]);
       var xden_yScale = d3.scale.linear()
             .range([xden_height, 0]);
-            
-      var yden_xScale = d3.scale.linear() // note that "x" value is VERTICAL
+      
+      // Note that, since the yden graph is rotated, the input variable
+      // is actually on the VERTICAL axis, but we use x/y in the traaditional
+      // input/output sense.
+      var yden_yScale = d3.scale.linear() // HORIZONTAL, OUTPUT variable (density)
             .range([yden_width, 0]);
-      var yden_yScale = d3.scale.linear() // note that "y" value is HORRIZONTAL
+      var yden_xScale = d3.scale.linear() // VERTICAL, INPUT variable (values)
             .range([scatter_height, 0]);
       
       // Axes
@@ -304,8 +221,8 @@
               .scale(xden_xScale)
               .orient("bottom");
               
-      var yden_xAxis = d3.svg.axis()
-              .scale(yden_yScale)
+      var yden_xAxis = d3.svg.axis() // X axis for yden is actually VERTICAL
+              .scale(yden_xScale)
               .orient("right");
       
       xden_svg.append("g")
@@ -316,7 +233,7 @@
         .attr("class", "axis yden-axis yden-x-axis")
         .attr("transform", _do("translate", yden_width, 0));
       
-      
+      // Density lines/paths
       var xden_line = d3.svg.line();
       var yden_line = d3.svg.line();
       
@@ -325,66 +242,54 @@
       var yden_line_path = yden_svg.append("path")
           .attr("clip-path", "url(#yden-clip)");
       
-      var xden_select_area = d3.svg.area();
-      var yden_select_area = d3.svg.area();
-      
-      var xden_select_line = d3.svg.line();
-      var yden_select_line = d3.svg.line();
-      
-      var xden_highlight = xden_svg.append("g")
-            .attr("id", "xden-highlight")
+      // Create selection groups to highlight the portions of distribution
+      // that are selected by the brushes
+      var xden_selection = xden_svg.append("g")
+            .attr("id", "xden-selection")
             .attr("clip-path", "url(#xden-clip)")
-      var yden_highlight = yden_svg.append("g")
+      var yden_selection = yden_svg.append("g")
             .attr("id", "yden-highlight")
             .attr("clip-path", "url(#yden-clip)")
+      
+      // Create areas/lines/paths for the selected section of the graphs
+      var xden_selection_area = d3.svg.area();
+      var yden_selection_area = d3.svg.area();
+      
+      var xden_selection_line = d3.svg.line();
+      var yden_selection_line = d3.svg.line();
             
-      var xden_select_area_path = xden_highlight.append("path");
-      var yden_select_area_path = yden_highlight.append("path");
-      var xden_select_line_path = xden_highlight.append("path");
-      var yden_select_line_path = yden_highlight.append("path");
-            
-      var xden_select_handle = d3.svg.arc()
+      var xden_selection_area_path = xden_selection.append("path");
+      var yden_selection_area_path = yden_selection.append("path");
+      
+      var xden_selection_line_path = xden_selection.append("path");
+      var yden_selection_line_path = yden_selection.append("path");
+      
+      // Create the handles for the brushes      
+      var xden_selection_handle = d3.svg.arc()
           .outerRadius(xden_height / 8)
           .startAngle(0)
           .endAngle(function(d, i) { return i ? -Math.PI : Math.PI; });
-      var yden_select_handle = d3.svg.arc()
+      var yden_selection_handle = d3.svg.arc()
           .outerRadius(yden_width / 8)
           .startAngle(Math.PI / 2)
-          .endAngle(function(d, i) { return i ? -Math.PI / 2 : 3/2 * Math.PI; });
+          .endAngle(function(d, i) { return i ? 3/2 * Math.PI : -Math.PI / 2; });
       
-      
+      // Create brushes/groups for selections
       var xden_brush = d3.svg.brush();
-            //.x(xden_xScale)
-            //.extent([data.x.selected.min, data.x.selected.max])
-            //.on("brushstart", brushstart)
-            //.on("brush", brushmove)
-            //.on("brushend", brushend);
-            
-        var xden_brushg = xden_svg.append("g")
-          .attr("class", "brush")
-          //.call(xden_brush);
-        xden_brushg.selectAll("rect")
-          .attr("height", xden_height);
-        
-        
-        var yden_brush = d3.svg.brush();
-            //.x(xden_xScale)
-            //.extent([data.x.selected.min, data.x.selected.max])
-            //.on("brushstart", brushstart)
-            //.on("brush", brushmove)
-            //.on("brushend", brushend);
-            
-        var yden_brushg = yden_svg.append("g")
-          .attr("class", "brush")
-          //.call(xden_brush);
-        yden_brushg.selectAll("rect")
-          .attr("width", yden_width);
-        
-        /*  
-        xden_brushg.selectAll(".resize").append("path")
-          .attr("transform", "translate(0," +  xden_height / 2 + ")")
-          .attr("d", arc);*/
+      var yden_brush = d3.svg.brush();
       
+      var xden_brushg = xden_svg.append("g")
+          .attr("class", "brush");
+      xden_brushg.selectAll("rect")
+          .attr("height", xden_height);
+          
+      var yden_brushg = yden_svg.append("g")
+          .attr("class", "brush");
+      yden_brushg.selectAll("rect")
+          .attr("width", yden_width);
+      
+        
+       
       
       // Make interaction functions
       function mouseOverCircle(d) {
@@ -401,6 +306,7 @@
       
       // Initialize vis      
       function generateVis() {
+        
         
         data = {
           x: extractField(dataset, "no_car_pct"),
@@ -437,6 +343,9 @@
         data.y.density.sortedValues = data.y.density.values.sort(function(a,b) { return a.x - b.x; });
         
         
+        d3.select("#map-container")
+          .datum(data)
+          .call(scatter);//, data.data);
         bind_data(data);
         updateScatterAxes();
         updateScatterCircles();
@@ -459,13 +368,13 @@
       
       function updateScatterAxis(axis) {
         if (axis.indexOf("x") !== -1) {
-          scatter_xScale.domain([data.x.selected.min, data.x.selected.max])
-                                .range([0, scatter_width]);
+          scatter_xScale.domain([data.x.selected.min, data.x.selected.max]);
+                                //.range([0, scatter_width]);
           scatter_svg.select(".x-axis").call(scatter_xAxis);
         }
         if (axis.indexOf("y") !== -1) {
-          scatter_yScale.domain([data.y.selected.min, data.y.selected.max])
-                                .range([scatter_height, 0]);                   
+          scatter_yScale.domain([data.y.selected.min, data.y.selected.max]);
+                                //.range([scatter_height, 0]);                   
           scatter_svg.select(".y-axis").call(scatter_yAxis);
         }
         
@@ -497,11 +406,7 @@
               //cx: function(d, i) { return scatter_xScale(d.x); },
               //cy: function(d, i) { return scatter_yScale(d.y); },
               r: 0,
-              fill: "blue",
-              stroke: "darkblue",
               "stroke-width": r/3,
-              "fill-opacity": .4,
-              "stroke-opacity": .6,
             })
             .on("mouseover",function(d) { mouseOverCircle(d, (data.x.label), data.y.label) })
             .transition()
@@ -520,8 +425,8 @@
         xden_xScale.domain([0, d3.max(data.x.density.values, function(d) { return d.x; })]);
         xden_yScale.domain([0, 1.1 * d3.max(data.x.density.values, function(d) { return d.y })])
         
-        yden_xScale.domain([0, 1.1 * d3.max(data.y.density.values, function(d) { return d.y; })]);
-        yden_yScale.domain([0, d3.max(data.y.density.values, function(d) { return d.x; })])
+        yden_xScale.domain([0, d3.max(data.y.density.values, function(d) { return d.x; })])
+        yden_yScale.domain([0, 1.1 * d3.max(data.y.density.values, function(d) { return d.y; })]);
         
         xden_svg.select(".xden-x-axis").call(xden_xAxis);
         yden_svg.select(".yden-x-axis").call(yden_xAxis);
@@ -534,9 +439,10 @@
         
         xden_line.x(function(d) { return xden_xScale(d.x); })
                  .y(function(d) { return xden_yScale(d.y); });
-            
-        yden_line.x(function(d) { return yden_xScale(d.y); })
-                 .y(function(d) { return yden_yScale(d.x); });
+        
+        // X/Y switched because the axes are rotated    
+        yden_line.y(function(d) { return yden_xScale(d.x); })
+                 .x(function(d) { return yden_yScale(d.y); });
 
         
         // Add density paths
@@ -546,54 +452,48 @@
         
         // Create selection area
         
-        xden_select_area.x(function(d) { return xden_xScale(d.x); })
+        xden_selection_area.x(function(d) { return xden_xScale(d.x); })
                         .y0(xden_height)
                         .y1(function(d) { return xden_yScale(d.y); });
                         
-        yden_select_area.y(function(d) { return yden_yScale(d.x); })
+        yden_selection_area.y(function(d) { return yden_xScale(d.x); })
                         .x0(yden_width)
-                        .x1(function(d) { return yden_xScale(d.y); });
+                        .x1(function(d) { return yden_yScale(d.y); });
         
         
-        xden_select_line.x(function(d) { return xden_xScale(d.x); })
+        xden_selection_line.x(function(d) { return xden_xScale(d.x); })
                         .y(function(d) { return xden_yScale(d.y); });
-        yden_select_line.x(function(d) { return yden_xScale(d.y); })
-                        .y(function(d) { return yden_yScale(d.x); });
-                  
-          
+        yden_selection_line.y(function(d) { return yden_xScale(d.x); })
+                        .x(function(d) { return yden_yScale(d.y); });
         
-        
-          
-        
-
-        //xden_highlight.append("path")
-        xden_select_area_path.datum(data.x.density.sortedValues.filter(function(d) {
+        // Selection paths are filtered to data shown in scatter          
+        xden_selection_area_path.datum(data.x.density.sortedValues.filter(function(d) {
                     return (data.x.selected.min <= d.x && d.x <= data.x.selected.max);
                   }))
             .attr("class", "area")
-            .attr("d", xden_select_area);
+            .attr("d", xden_selection_area);
 
-        xden_select_line_path.datum(data.x.density.sortedValues.filter(function(d) {
+        xden_selection_line_path.datum(data.x.density.sortedValues.filter(function(d) {
                     return (data.x.selected.min <= d.x && d.x <= data.x.selected.max);
                   }))
           .attr("class", "line")
-          .attr("d", xden_select_line);
+          .attr("d", xden_selection_line);
         
         console.log("selected: ");
         console.log(data.y.selected);
         console.log(data.y.density.sortedValues.filter(function(d) {
                     return (data.y.selected.min <= d.x && d.x <= data.y.selected.max);
                   }));
-        yden_select_area_path.datum(data.y.density.sortedValues.filter(function(d) {
+        yden_selection_area_path.datum(data.y.density.sortedValues.filter(function(d) {
                     return (data.y.selected.min <= d.x && d.x <= data.y.selected.max);
                   }))
             .attr("class", "area")
-            .attr("d", yden_select_area);
-        yden_select_line_path.datum(data.y.density.sortedValues.filter(function(d) {
+            .attr("d", yden_selection_area);
+        yden_selection_line_path.datum(data.y.density.sortedValues.filter(function(d) {
                     return (data.y.selected.min <= d.x && d.x <= data.y.selected.max);
                   }))
           .attr("class", "line")
-          .attr("d", yden_select_line);
+          .attr("d", yden_selection_line);
           
         // TODO: need to make it so selection goes all the way up to window. Or else
         // handle case where only a few points are selects
@@ -605,7 +505,7 @@
             .on("brush", xbrushmove)
             .on("brushend", xbrushend);
             
-        yden_brush.y(yden_yScale)
+        yden_brush.y(yden_xScale)
             .extent([data.y.selected.min, data.y.selected.max])
             .on("brushstart", ybrushstart)
             .on("brush", ybrushmove)
@@ -623,10 +523,10 @@
         
         xden_brushg.selectAll(".resize").append("path")
           .attr("transform", "translate(0," +  xden_height / 2 + ")")
-          .attr("d", xden_select_handle);
+          .attr("d", xden_selection_handle);
         yden_brushg.selectAll(".resize").append("path")
           .attr("transform", "translate(" + yden_width / 2 + ", 0)")
-          .attr("d", yden_select_handle);
+          .attr("d", yden_selection_handle);
         
 
             
@@ -666,18 +566,9 @@
             data.x.selected.max = d3.max(data.x.values);
           }
           updateScatterAxis("x");
-          //updateScatterCircles();
           updateScatterCirclePositions("x");
           updateDensity();
-          console.log("end brushend:");
-          console.log(xden_brush.extent());
-          console.log(data.x.selected);
           
-          //scatter_xScale.domain(s);
-          //scatter_svg.select(".x-axis").call(scatter_xAxis);
-          //scatter_svg.selectAll("circle").transition()
-          //    .attr("cx", function(d) { return scatter_xScale(d.x)});
-          //generateVis();
         }
         
         function ybrushstart() {
@@ -703,32 +594,14 @@
             data.y.selected.min = s[0];
             data.y.selected.max = s[1];
           } else {
-            //console.log("target empty");
             data.y.selected.min = d3.min(data.y.values);
             data.y.selected.max = d3.max(data.y.values);
           }
-          /*
-          var s = xden_brush.extent();
-          console.log(xden_brush.extent());
-          data.x.selected.min = s[0];
-          data.x.selected.max = s[1];
-          */
-          //scatter_xScale.domain([data.x.selected.min, data.x.selected.max]);
-          //scatter_svg.selectAll("circle").transition()
-            //  .attr("cx", function(d, i) { (i < 5) ? console.log(i + ": " + d.x + " -> " + scatter_xScale(d.x)) : null; return scatter_xScale(d.x)});
-          
-          //scatter_svg.select(".x-axis").call(scatter_xAxis);
-          //updateScatter(data);
-          //circles.classed("selected", function(d) { return s[0] <= d.x && d.x <= s[1]; });
           updateScatterAxis("y")
           updateScatterCirclePositions("y");
-          //console.log("end brushmove:");
-          //console.log(yden_brush.extent());
         }
         
         function ybrushend() {
-          //console.log("start brushend");
-          //svg.classed("selecting", !d3.event.target.empty());
           if (!d3.event.target.empty()) {
             var s = yden_brush.extent();
             console.log(s);
@@ -741,27 +614,14 @@
             data.y.selected.max = d3.max(data.y.values);
           }
           updateScatterAxis("y");
-          //updateScatterCircles();
           updateScatterCirclePositions("y");
           updateDensity();
-          //console.log("end brushend:");
-          //console.log(yden_brush.extent());
-          //console.log(data.y.selected);
-          
-          //scatter_xScale.domain(s);
-          //scatter_svg.select(".x-axis").call(scatter_xAxis);
-          //scatter_svg.selectAll("circle").transition()
-          //    .attr("cx", function(d) { return scatter_xScale(d.x)});
-          //generateVis();
         }
-
-        
-          
-
       }
       
+      /*
       // Load CSV and run vis
-      d3.csv("inc_2012.csv", function(error, data) {
+      d3.csv("data/rates/inc_2012.csv", function(error, data) {
         console.log("Loading file...")
         if (error) {  // If error is not null, something went wrong.
           console.log(error);  // Log the error.
@@ -775,38 +635,38 @@
           generateVis();
           //hideLoadingMsg();
         }
-      });
-      
+      });*/
+      /*
       var map_svg = d3.select("#map-container")
           .append("svg")
             .attr("width", scatter_width + scatter_margin.left + scatter_margin.right)
             .attr("height", scatter_height + scatter_margin.top + scatter_margin.bottom)
           .append("g")
             .attr("transform", _do("translate", scatter_margin.left, scatter_margin.top));
-            
-      /*
-      d3.json("SF_tracts_50p.json", function(json) {
-        var projection = d3.geo.mercator()
-                          .translate([scatter_width/2, scatter_height/2])
-                          .center([-122.4391, 37.7631])
-                          .scale(156000)
-                        ;//.clipExtent([[-122.612285,37.706721],[-122.28178,37.929823999999996]]);
-        var path = d3.geo.path().projection(projection);
-        console.log(json.geometries);
-        console.log(projection);
-        map_svg.selectAll("path")
-           .data(json.geometries)
-           .enter()
-           .append("path")
-           .attr("d", path)
-           .style("fill", "none")
-           .style("stroke", "gray");
-           
-        console.log(json);
-      });*/
+      */
       
-      d3.json("gz_2010_06_140_00_500k/sf_tracts.json", function(json) {
+      var loadedCSV = function(error, result) {
+        console.log("Loaded CSV");
+      };
+      var loadedJSON = function(error, result) {
+        console.log("Loaded JSON");
+      };
+      queue()
+        .defer(d3.json, "geo/sf_tracts_topo_small.json")
+        .defer(d3.csv, "data/rates/inc_2012.csv")
+        .awaitAll(function(error, results) {
+          console.log(results);
+          mapdata = results[0];
+          dataset = results[1];
+          tracts = topojson.feature(mapdata, mapdata.objects.sf_tracts);
+          generateVis()
+        });
+      
+      //d3.json("geo/gz_2010_06_140_00_500k/sf_tracts.json", function(json) {
+      /*
+      d3.json("geo/sf_tracts_topo_small.json", function(json) {
           console.log(json);
+          json_data = json;
           var projection = d3.geo.mercator()
                           .translate([scatter_width/2, scatter_height/2])
                           .center([-122.4391, 37.7631])
@@ -814,11 +674,8 @@
                         ;//.clipExtent([[-122.612285,37.706721],[-122.28178,37.929823999999996]]);
           
            color = d3.scale.quantize()
-                    /*.range(["rgb(237,248,233)", "rgb(200,228,179)",
-                     "rgb(186,196,118)", "rgb(150,163,84)","rgb(116,109,44)","rgb(80,248,233)", "rgb(49,228,179)",
-                     "rgb(30,196,118)", "rgb(15,163,84)","rgb(0,109,44)"]);
-                    */
                     .range(colorbrewer.Greens[9]);
+                    
           var path = d3.geo.path().projection(projection);
           if (dataset.length > 0) {
             console.log("HAS DATA");
@@ -841,7 +698,7 @@
           // JUST A HACK WHILE TESTING
           color.domain([0,80]);
           map_svg.selectAll(".tract")
-              .data(json.features)
+              .data(topojson.feature(json))
             .enter()
               .append("path")
               .attr("class", function(d) {
@@ -851,19 +708,40 @@
               .style("fill", function(d, i) {
                   var data = d.properties.data;
                   if (data) { var value = data["vehicle theft (rate)"]; }
-                  if (value /*&& value < 20*/) {
+                  if (value) {
                     return color(value);
                   } else {
                     return "#ccc";
                   }
               });
-      });
+      });*/
       /*
       d3.json("gz_2010_06_140_00_500k/sf_tracts_full_topo.json", function(json) {
         console.log(json);
         
         map_svg.append("path")
               .datum(topojson.feature()
+      });*/
+      
+      /*
+      d3.json("SF_tracts_50p.json", function(json) {
+        var projection = d3.geo.mercator()
+                          .translate([scatter_width/2, scatter_height/2])
+                          .center([-122.4391, 37.7631])
+                          .scale(156000)
+                        ;//.clipExtent([[-122.612285,37.706721],[-122.28178,37.929823999999996]]);
+        var path = d3.geo.path().projection(projection);
+        console.log(json.geometries);
+        console.log(projection);
+        map_svg.selectAll("path")
+           .data(json.geometries)
+           .enter()
+           .append("path")
+           .attr("d", path)
+           .style("fill", "none")
+           .style("stroke", "gray");
+           
+        console.log(json);
       });*/
     </script>
   </body>

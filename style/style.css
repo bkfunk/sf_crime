@@ -1,0 +1,99 @@
+.tract-06075030800 {
+  stroke: red;
+}
+#main {
+  clear: both;
+  float: left;
+  margin: auto;
+}
+#info {
+  clear: both;
+  margin: auto;
+  text-align: center;
+  height: 1.2em;
+}
+#scatter-group-container {
+  float: left;
+  width: 600px;
+  height: 600px;
+  border: 1px solid blue;
+}
+#map-group-container {
+  float: left;
+  width: 600px;
+  height: 600px;
+  border: 1px solid gray;
+}
+#y-density-container {
+  float: left;
+}
+#scatter-container {
+  float: left;
+  clear: left;
+}
+#corner-container {
+  clear: right;
+  float: left;
+}
+#x-density-container {
+  float: left;
+}
+
+
+#y-density-slider {
+  float: left;
+}
+
+
+circle {
+  fill: blue;
+  fill-opacity: .4;
+  stroke: darkblue;
+  stroke-opacity: .6;
+  opacity: .3;
+}
+circle:hover {
+  opacity: 1;
+}
+.text {
+  clear: both;
+}
+svg {
+  float: left;
+  border: 1px dashed lightgray;
+}
+.axis path,
+.axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    font-family: sans-serif;
+    font-size: 11px;
+}
+.line {
+  fill: none;
+  stroke: #999;
+  stroke-width: 1px;
+}
+
+.area {
+  fill: lightblue;
+  stroke-width: 0;
+  fill-opacity: .5;
+}
+
+#xden-highlight .line,
+#yden-highlight .line {
+  stroke-width: 2px;
+  stroke: #000;
+  stroke-opacity: 1;
+}
+
+.brush .extent {
+  stroke: #fff;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}

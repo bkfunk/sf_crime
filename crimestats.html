@@ -90,6 +90,7 @@
         <div id="corner-container">
         </div>
       </div>
+      <div id="foo"></div>
       <div id="map-container">
       </div>
     </div>
@@ -343,9 +344,12 @@
         data.y.density.sortedValues = data.y.density.values.sort(function(a,b) { return a.x - b.x; });
         
         
-        d3.select("#map-container")
+       d3.select("#map-container")
           .datum(data)
           .call(scatter);//, data.data);
+        scatter.addMarkerListener("mouseover", function(d, i) {
+          d3.select("#foo").text("x: " + d.x + " y: " + d.y + " id: " + d.id);
+        });
         bind_data(data);
         updateScatterAxes();
         updateScatterCircles();

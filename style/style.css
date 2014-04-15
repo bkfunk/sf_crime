@@ -17,11 +17,12 @@
   width: 600px;
   height: 600px;
   border: 1px solid blue;
+  display: none;
 }
 #map-group-container {
   float: left;
-  width: 600px;
-  height: 600px;
+  /*width: 600px;
+  height: 600px;*/
   border: 1px solid gray;
 }
 #y-density-container {
@@ -37,6 +38,11 @@
 }
 #x-density-container {
   float: left;
+}
+#test-den {
+  float: left;
+  width: 1000;
+  height: 1000;
 }
 
 
@@ -86,14 +92,15 @@ svg {
 }
 
 #xden-highlight .line,
-#yden-highlight .line {
+#yden-highlight .line,
+.highlight-line {
   stroke-width: 2px;
-  stroke: #000;
+  stroke: #333;
   stroke-opacity: 1;
 }
 
 .brush .extent {
-  stroke: #fff;
+  stroke: steelblue;
   fill-opacity: .125;
   shape-rendering: crispEdges;
 }

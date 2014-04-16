@@ -98,6 +98,7 @@
     <script type="text/javascript">
       var mapdata, dataset, tracts;
       var scatter, xden, yden, map;
+      var tractData;
       
       // Initialize vis      
       function generateVis() {
@@ -162,9 +163,23 @@
         });
         
     // Map Plot
+        tractData = {
+          index: tracts.features.map(function(d) { return d.id; })
+        };
+        for (i in tracts.features) {
+          var t = tracts.features[i];
+          tractData[t.id] = t;
+        }
+        for (i in dataset) {
+          var t = dataset[i];
+          var id = "0" + t.tract_id; // CSV ID doesn't have initial zero
+          if (tractData.hasOwnProperty(id)) {
+            tractData[id]["data"] = t;
+          }
+        }
         map = multiMap();
         d3.select("#map-container")
-          .datum(tracts)
+          .datum(tractData)
           .call(map);
       }
       

@@ -14,10 +14,9 @@
 }
 #scatter-group-container {
   float: left;
-  width: 600px;
-  height: 600px;
+  width: 650px;
+  height: 650px;
   border: 1px solid blue;
-  display: none;
 }
 #map-group-container {
   float: left;
@@ -39,12 +38,6 @@
 #x-density-container {
   float: left;
 }
-#test-den {
-  float: left;
-  width: 1000;
-  height: 1000;
-}
-
 
 #y-density-slider {
   float: left;

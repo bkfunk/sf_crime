@@ -13,6 +13,7 @@
     <script type="text/javascript" src="lib/queue/queue.min.js"></script>
     <script type="text/javascript" src="lib/charts/density.js"></script>
     <script type="text/javascript" src="lib/charts/scatter.js"></script>
+    <script type="text/javascript" src="lib/charts/map.js"></script>
     <!--<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
     <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>-->
     <!--<script src="http://d3js.org/queue.v1.min.js"></script>-->
@@ -74,7 +75,7 @@
   <body>
     <div id="main">
       <div id="info">
-        
+        Info
       </div>
       <div id="scatter-group-container">
         
@@ -90,226 +91,17 @@
         <div id="corner-container">
         </div>
       </div>
-      <div id="foo"></div>
       <div id="map-container">
       </div>
-      <div id="test-den"></div>
     </div>
     
     <script type="text/javascript">
-    
-      var scatter = scatterPlot();
-      var xden = densityPlot();
-    
-      var color;
-      // Create global variables
-      var dataset; // Loaded from csv, contains all variables
-      var mapdata; // Loaded from topojson
-      var tracts;
-      var data; // Contains only the data for a particular plot
-      var kden;
-      
-      // Margins/Width/Height for scatter
-      var scatter_margin = {top: 20, right: 10, bottom: 40, left: 40};
-      var scatter_width = 500 - scatter_margin.left - scatter_margin.right;
-      var scatter_height = 500 - scatter_margin.top - scatter_margin.bottom;
-      
-      // Margins/Long-dim/Short-dim
-      var density_margin = {top: 5, right: 40, bottom: 20, left: 5};
-      var xden_height = scatter_width / 5 - density_margin.top - density_margin.bottom;
-      var yden_width = scatter_height / 5 - density_margin.left - density_margin.right;
-      
-      // Radius for points
-      var r = scatter_width / 100;
-      
-      
-      
-    /* SCATTER PLOT */
-      var scatter_xScale = d3.scale.linear()
-                              .range([0, scatter_width]);
-      var scatter_xAxis = d3.svg.axis().scale(scatter_xScale).orient("bottom");
-      
-      var scatter_yScale = d3.scale.linear()
-                              .range([scatter_height, 0]);
-      var scatter_yAxis = d3.svg.axis().scale(scatter_yScale).orient("left");
-      
-      var scatter_svg = d3.select("#scatter-container")
-          .append("svg")
-            .attr("width", scatter_width + scatter_margin.left + scatter_margin.right)
-            .attr("height", scatter_height + scatter_margin.top + scatter_margin.bottom)
-          .append("g")
-            .attr("transform", _do("translate", scatter_margin.left, scatter_margin.top));
-      
-      // Create clip path
-      scatter_svg.append("clipPath")
-            .attr("id", "scatter-clip")
-          .append("rect")
-            .attr("x", 0)
-            .attr("y", 0)
-            .attr("width", scatter_width)
-            .attr("height", scatter_height);
-      
-      // Create group for circles
-      var circlesg = scatter_svg.append("g")
-                          .attr("id", "circles")
-                          .attr("clip-path", "url(#scatter-clip)");
-                        
-      var circles;
-      
-      // Add axes to SVG
-      scatter_svg.append("g")
-          .attr("class", "axis x-axis")
-          .attr("transform", _do("translate", 0, scatter_height));
-      
-      scatter_svg.append("g")
-          .attr("class", "axis y-axis");
-      
-      
-    /* DENSITY PLOTS */
-      // Create density/corner SVGs    
-      var xden_svg = d3.select("#x-density-container")
-          .append("svg")
-            .attr("width", scatter_width + scatter_margin.left + scatter_margin.right)
-            .attr("height", xden_height + density_margin.top + density_margin.bottom)
-          .append("g")
-            .attr("transform", _do("translate", scatter_margin.left, density_margin.top));
-      
-      var yden_svg = d3.select("#y-density-container")
-          .append("svg")
-            .attr("width", yden_width + density_margin.left + density_margin.right)
-            .attr("height", scatter_height + scatter_margin.top + scatter_margin.bottom)
-          .append("g")
-            .attr("transform", _do("translate", density_margin.left, scatter_margin.top));
-            
-      var corner_svg = d3.select("#corner-container")
-          .append("svg")
-            .attr("width", yden_width + density_margin.left + density_margin.right)
-            .attr("height", xden_height + density_margin.top + density_margin.bottom);
-            
-      // Create clip paths
-      xden_svg.append("clipPath")
-              .attr("id", "xden-clip")
-            .append("rect")
-              .attr("x", 0)
-              .attr("y", 0)
-              .attr("width", scatter_width)
-              .attr("height", xden_height);
-              
-      yden_svg.append("clipPath")
-              .attr("id", "yden-clip")
-            .append("rect")
-              .attr("x", 0)
-              .attr("y", 0)
-              .attr("width", yden_width)
-              .attr("height", scatter_height);
-      
-      
-      // Create scales        
-      var xden_xScale = d3.scale.linear()
-            .range([0, scatter_width]);
-      var xden_yScale = d3.scale.linear()
-            .range([xden_height, 0]);
-      
-      // Note that, since the yden graph is rotated, the input variable
-      // is actually on the VERTICAL axis, but we use x/y in the traaditional
-      // input/output sense.
-      var yden_yScale = d3.scale.linear() // HORIZONTAL, OUTPUT variable (density)
-            .range([yden_width, 0]);
-      var yden_xScale = d3.scale.linear() // VERTICAL, INPUT variable (values)
-            .range([scatter_height, 0]);
-      
-      // Axes
-      var xden_xAxis = d3.svg.axis()
-              .scale(xden_xScale)
-              .orient("bottom");
-              
-      var yden_xAxis = d3.svg.axis() // X axis for yden is actually VERTICAL
-              .scale(yden_xScale)
-              .orient("right");
-      
-      xden_svg.append("g")
-        .attr("class", "axis xden-axis xden-x-axis")
-        .attr("transform", _do("translate", 0, xden_height));
-        
-      yden_svg.append("g")
-        .attr("class", "axis yden-axis yden-x-axis")
-        .attr("transform", _do("translate", yden_width, 0));
-      
-      // Density lines/paths
-      var xden_line = d3.svg.line();
-      var yden_line = d3.svg.line();
-      
-      var xden_line_path = xden_svg.append("path")
-          .attr("clip-path", "url(#xden-clip)");
-      var yden_line_path = yden_svg.append("path")
-          .attr("clip-path", "url(#yden-clip)");
-      
-      // Create selection groups to highlight the portions of distribution
-      // that are selected by the brushes
-      var xden_selection = xden_svg.append("g")
-            .attr("id", "xden-selection")
-            .attr("clip-path", "url(#xden-clip)")
-      var yden_selection = yden_svg.append("g")
-            .attr("id", "yden-highlight")
-            .attr("clip-path", "url(#yden-clip)")
-      
-      // Create areas/lines/paths for the selected section of the graphs
-      var xden_selection_area = d3.svg.area();
-      var yden_selection_area = d3.svg.area();
-      
-      var xden_selection_line = d3.svg.line();
-      var yden_selection_line = d3.svg.line();
-            
-      var xden_selection_area_path = xden_selection.append("path");
-      var yden_selection_area_path = yden_selection.append("path");
-      
-      var xden_selection_line_path = xden_selection.append("path");
-      var yden_selection_line_path = yden_selection.append("path");
-      
-      // Create the handles for the brushes      
-      var xden_selection_handle = d3.svg.arc()
-          .outerRadius(xden_height / 8)
-          .startAngle(0)
-          .endAngle(function(d, i) { return i ? -Math.PI : Math.PI; });
-      var yden_selection_handle = d3.svg.arc()
-          .outerRadius(yden_width / 8)
-          .startAngle(Math.PI / 2)
-          .endAngle(function(d, i) { return i ? 3/2 * Math.PI : -Math.PI / 2; });
-      
-      // Create brushes/groups for selections
-      var xden_brush = d3.svg.brush();
-      var yden_brush = d3.svg.brush();
-      
-      var xden_brushg = xden_svg.append("g")
-          .attr("class", "brush");
-      xden_brushg.selectAll("rect")
-          .attr("height", xden_height);
-          
-      var yden_brushg = yden_svg.append("g")
-          .attr("class", "brush");
-      yden_brushg.selectAll("rect")
-          .attr("width", yden_width);
-      
-        
-       
-      
-      // Make interaction functions
-      function mouseOverCircle(d) {
-        d3.select("#info").html("<strong>Tract ID:</strong> " + d.id
-                        + "; <strong>" + data.x.label + "</strong>: " + d.x
-                        + "; <strong>" + data.y.label + "</strong>: " + parseFloat(d.y).toFixed(2));
-      }
-      
-      
-      
-      
-      
-      
+      var mapdata, dataset, tracts;
+      var scatter, xden, yden, map;
       
       // Initialize vis      
       function generateVis() {
-        
-        
+
         data = {
           x: extractField(dataset, "no_car_pct"),
           y: extractField(dataset, "vehicle theft (rate)"),
@@ -329,32 +121,20 @@
                   (data.y.selected.min <= d.y && d.y <= data.y.selected.max));
         };
         
-        data.x.kde = science.stats.kde().sample(data.x.values);
-        data.y.kde = science.stats.kde().sample(data.y.values);
-        data.x.density = { values: data.x.kde(data.x.values)
-                                      .map(function(d) {
-                                        return {x: d[0],
-                                                y: d[1]};
-                                      })};
-        data.y.density = { values: data.y.kde(data.y.values)
-                                      .map(function(d) {
-                                        return {x: d[0],
-                                                y: d[1]};
-                                      })};
-        data.x.density.sortedValues = data.x.density.values.sort(function(a,b) { return a.x - b.x; });
-        data.y.density.sortedValues = data.y.density.values.sort(function(a,b) { return a.x - b.x; });
-        
-        
-       d3.select("#map-container")
-          .datum(data)
-          .call(scatter);//, data.data);
+    // Scatter Plot
+        scatter = scatterPlot();
+        d3.select("#scatter-container")
+            .datum(data)
+            .call(scatter);//, data.data);
         scatter.addMarkerListener("mouseover", function(d, i) {
-          d3.select("#foo").text("x: " + d.x + " y: " + d.y + " id: " + d.id);
+          d3.select("#info").text("x: " + d.x + " y: " + d.y + " id: " + d.id);
         });
         
-        d3.select("#test-den")
+    // X-density Plot
+        xden = densityPlot();
+        d3.select("#x-density-container")
           .datum(data)
-          .call(xden);
+          .call(xden, "x");
         xden.brushMoveListener(function(brush) {
           scatter.updateAxes("x", brush.extent());
           scatter.updateMarkerPositions(false);
@@ -364,305 +144,29 @@
           scatter.updateMarkerPositions(true);
         });
         
+    // Y-density Plot
+        yden = densityPlot().value(function(d) {
+          return d['y'];
+        });
+        d3.select("#y-density-container")
+          .datum(data)
+          .call(yden);
+        yden.rotate(270);
+        yden.brushMoveListener(function(brush) {
+          scatter.updateAxes("y", brush.extent());
+          scatter.updateMarkerPositions(false);
+        });
+        yden.brushEndListener(function(brush) {
+          scatter.updateAxes("y", brush.extent());
+          scatter.updateMarkerPositions(true);
+        });
         
-        bind_data(data);
-        updateScatterAxes();
-        updateScatterCircles();
-        
-        updateDensityAxes();
-        updateDensity();
-        
+    // Map Plot
+        map = multiMap();
+        d3.select("#map-container")
+          .datum(tracts)
+          .call(map);
       }
-      
-      function bind_data(data) {
-        circles = circlesg.selectAll("circle").data(data.data);//.filter(data.isSelected));
-        
-        xden_line_path.datum(data.x.density.sortedValues)
-          .attr("class", "line xden-line");  
-        yden_line_path.datum(data.y.density.sortedValues)
-          .attr("class", "line yden-line");
-          
-        
-      }
-      
-      function updateScatterAxis(axis) {
-        if (axis.indexOf("x") !== -1) {
-          scatter_xScale.domain([data.x.selected.min, data.x.selected.max]);
-                                //.range([0, scatter_width]);
-          scatter_svg.select(".x-axis").call(scatter_xAxis);
-        }
-        if (axis.indexOf("y") !== -1) {
-          scatter_yScale.domain([data.y.selected.min, data.y.selected.max]);
-                                //.range([scatter_height, 0]);                   
-          scatter_svg.select(".y-axis").call(scatter_yAxis);
-        }
-        
-      }
-      function updateScatterAxes() {
-        updateScatterAxis("xy");
-      }
-      
-      function updateScatterCirclePositions(axis) {
-        if (typeof axis === "undefined") {
-          axis = "xy";
-        }
-        if (axis.indexOf("x") !== -1) {
-          circles.attr("cx", function(d, i) { return scatter_xScale(d.x); });
-        }
-        if (axis.indexOf("y") !== -1) {
-          circles.attr("cy", function(d, i) { return scatter_yScale(d.y); });
-        }
-      }
-      
-      function updateScatterCircles() {
-        // ENTER
-        circles.enter()
-          .append("circle")
-            //.attr(
-              //"cx", function(d, i) { console.log(i + ": " + d.x + " -> " + scatter_xScale(d.x)); return scatter_xScale(d.x); }
-              //)
-            .attr({
-              //cx: function(d, i) { return scatter_xScale(d.x); },
-              //cy: function(d, i) { return scatter_yScale(d.y); },
-              r: 0,
-              "stroke-width": r/3,
-            })
-            .on("mouseover",function(d) { mouseOverCircle(d, (data.x.label), data.y.label) })
-            .transition()
-              .attr("r", r);
-        
-        updateScatterCirclePositions();
-        // EXIT
-        circles.exit()
-            .transition()
-              .style("fill-opacity", 1e-6)
-              .style("stroke-opacity", 1e-6)
-              .remove();
-      }
-      
-      function updateDensityAxes() {
-        xden_xScale.domain([0, d3.max(data.x.density.values, function(d) { return d.x; })]);
-        xden_yScale.domain([0, 1.1 * d3.max(data.x.density.values, function(d) { return d.y })])
-        
-        yden_xScale.domain([0, d3.max(data.y.density.values, function(d) { return d.x; })])
-        yden_yScale.domain([0, 1.1 * d3.max(data.y.density.values, function(d) { return d.y; })]);
-        
-        xden_svg.select(".xden-x-axis").call(xden_xAxis);
-        yden_svg.select(".yden-x-axis").call(yden_xAxis);
-      }
-      
-      function updateDensity() {
-        
-                
-        // Create density paths
-        
-        xden_line.x(function(d) { return xden_xScale(d.x); })
-                 .y(function(d) { return xden_yScale(d.y); });
-        
-        // X/Y switched because the axes are rotated    
-        yden_line.y(function(d) { return yden_xScale(d.x); })
-                 .x(function(d) { return yden_yScale(d.y); });
-
-        
-        // Add density paths
-        xden_line_path.attr("d", xden_line);
-        yden_line_path.attr("d", yden_line);
-        
-        
-        // Create selection area
-        
-        xden_selection_area.x(function(d) { return xden_xScale(d.x); })
-                        .y0(xden_height)
-                        .y1(function(d) { return xden_yScale(d.y); });
-                        
-        yden_selection_area.y(function(d) { return yden_xScale(d.x); })
-                        .x0(yden_width)
-                        .x1(function(d) { return yden_yScale(d.y); });
-        
-        
-        xden_selection_line.x(function(d) { return xden_xScale(d.x); })
-                        .y(function(d) { return xden_yScale(d.y); });
-        yden_selection_line.y(function(d) { return yden_xScale(d.x); })
-                        .x(function(d) { return yden_yScale(d.y); });
-        
-        // Selection paths are filtered to data shown in scatter          
-        xden_selection_area_path.datum(data.x.density.sortedValues.filter(function(d) {
-                    return (data.x.selected.min <= d.x && d.x <= data.x.selected.max);
-                  }))
-            .attr("class", "area")
-            .attr("d", xden_selection_area);
-
-        xden_selection_line_path.datum(data.x.density.sortedValues.filter(function(d) {
-                    return (data.x.selected.min <= d.x && d.x <= data.x.selected.max);
-                  }))
-          .attr("class", "line")
-          .attr("d", xden_selection_line);
-        
-        //console.log("selected: ");
-        //console.log(data.y.selected);
-        /*console.log(data.y.density.sortedValues.filter(function(d) {
-                    return (data.y.selected.min <= d.x && d.x <= data.y.selected.max);
-                  }));*/
-        yden_selection_area_path.datum(data.y.density.sortedValues.filter(function(d) {
-                    return (data.y.selected.min <= d.x && d.x <= data.y.selected.max);
-                  }))
-            .attr("class", "area")
-            .attr("d", yden_selection_area);
-        yden_selection_line_path.datum(data.y.density.sortedValues.filter(function(d) {
-                    return (data.y.selected.min <= d.x && d.x <= data.y.selected.max);
-                  }))
-          .attr("class", "line")
-          .attr("d", yden_selection_line);
-          
-        // TODO: need to make it so selection goes all the way up to window. Or else
-        // handle case where only a few points are selects
-        
-        //var xden_brush = d3.svg.brush()
-        xden_brush.x(xden_xScale)
-            .extent([data.x.selected.min, data.x.selected.max])
-            .on("brushstart", xbrushstart)
-            .on("brush", xbrushmove)
-            .on("brushend", xbrushend);
-            
-        yden_brush.y(yden_xScale)
-            .extent([data.y.selected.min, data.y.selected.max])
-            .on("brushstart", ybrushstart)
-            .on("brush", ybrushmove)
-            .on("brushend", ybrushend);
-            
-        //var xden_brushg = xden_svg.append("g")
-          //.attr("class", "brush")
-        xden_brushg.call(xden_brush);
-        xden_brushg.selectAll("rect")
-          .attr("height", xden_height);
-          
-        yden_brushg.call(yden_brush);
-        yden_brushg.selectAll("rect")
-          .attr("width", yden_width);
-        
-        xden_brushg.selectAll(".resize").append("path")
-          .attr("transform", "translate(0," +  xden_height / 2 + ")")
-          .attr("d", xden_selection_handle);
-        yden_brushg.selectAll(".resize").append("path")
-          .attr("transform", "translate(" + yden_width / 2 + ", 0)")
-          .attr("d", yden_selection_handle);
-        
-
-            
-        function xbrushstart() {
-          
-        }
-        
-        function xbrushmove() {
-          console.log("start brushmove:");
-          if (!d3.event.target.empty()) {
-            var s = xden_brush.extent();
-            data.x.selected.min = s[0];
-            data.x.selected.max = s[1];
-          } else {
-            console.log("target empty");
-            data.x.selected.min = d3.min(data.x.values);
-            data.x.selected.max = d3.max(data.x.values);
-          }
-          updateScatterAxis("x")
-          updateScatterCirclePositions("x");
-          console.log("end brushmove:");
-          console.log(xden_brush.extent());
-        }
-        
-        function xbrushend() {
-          console.log("start brushend");
-          //svg.classed("selecting", !d3.event.target.empty());
-          if (!d3.event.target.empty()) {
-            var s = xden_brush.extent();
-            console.log(s);
-            
-            data.x.selected.min = s[0];
-            data.x.selected.max = s[1];
-          } else {
-            console.log("target empty");
-            data.x.selected.min = d3.min(data.x.values);
-            data.x.selected.max = d3.max(data.x.values);
-          }
-          updateScatterAxis("x");
-          updateScatterCirclePositions("x");
-          updateDensity();
-          
-        }
-        
-        function ybrushstart() {
-          console.log("brushstart");
-          var target = d3.event.target;
-          for (var key in target) {
-            console.log(key);
-            if (target.hasOwnProperty(key)) {
-              console.log(key + ": " + typeof target[key]);
-            } else {
-              console.log(key);
-            }
-          }
-          console.log(d3.select(this));
-        }
-        
-        function ybrushmove() {
-          //console.log("start brushmove:");
-          if (!d3.event.target.empty()) {
-            var s = yden_brush.extent();
-            console.log(s);
-            
-            data.y.selected.min = s[0];
-            data.y.selected.max = s[1];
-          } else {
-            data.y.selected.min = d3.min(data.y.values);
-            data.y.selected.max = d3.max(data.y.values);
-          }
-          updateScatterAxis("y")
-          updateScatterCirclePositions("y");
-        }
-        
-        function ybrushend() {
-          if (!d3.event.target.empty()) {
-            var s = yden_brush.extent();
-            console.log(s);
-            
-            data.y.selected.min = s[0];
-            data.y.selected.max = s[1];
-          } else {
-            console.log("target empty");
-            data.y.selected.min = d3.min(data.y.values);
-            data.y.selected.max = d3.max(data.y.values);
-          }
-          updateScatterAxis("y");
-          updateScatterCirclePositions("y");
-          updateDensity();
-        }
-      }
-      
-      /*
-      // Load CSV and run vis
-      d3.csv("data/rates/inc_2012.csv", function(error, data) {
-        console.log("Loading file...")
-        if (error) {  // If error is not null, something went wrong.
-          console.log(error);  // Log the error.
-        } else {      // If no error, the file loaded correctly. Yay!
-          console.log("Data:", data);   // Log the data.
-          
-          //Include other code to execute after successful file load here
-          dataset = data.filter(function(d) {
-            return (d['hh_moe'] / d['hh'] <= 0.2);
-          });
-          generateVis();
-          //hideLoadingMsg();
-        }
-      });*/
-      /*
-      var map_svg = d3.select("#map-container")
-          .append("svg")
-            .attr("width", scatter_width + scatter_margin.left + scatter_margin.right)
-            .attr("height", scatter_height + scatter_margin.top + scatter_margin.bottom)
-          .append("g")
-            .attr("transform", _do("translate", scatter_margin.left, scatter_margin.top));
-      */
       
       var loadedCSV = function(error, result) {
         console.log("Loaded CSV");

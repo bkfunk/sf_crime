@@ -146,7 +146,7 @@
         
         
     // Scatter Plot
-        scatter = scatterPlot().plotWidth(300).plotHeight(500);
+        scatter = scatterPlot().plotWidth(300).plotHeight(300);
         d3.select("#scatter-container")
             .datum(data)
             .call(scatter);//, data.data);
@@ -166,7 +166,7 @@
         xden = densityPlot().plotWidth(300).plotHeight(100);
         d3.select("#x-density-container")
           .datum(data)
-          .call(xden, "y");
+          .call(xden);
         //xden.plotWidth(300).plotHeight(100);
         xden.brushMoveListener(function(brush) {
           scatter.updateAxes("x", brush.extent());
@@ -178,9 +178,9 @@
         });
         
     // Y-density Plot
-        yden = densityPlot().plotWidth(100).plotHeight(500)
+        yden = densityPlot().plotWidth(100).plotHeight(300)
           .getValue(function(d) {
-            return d['x'];
+            return d['y'];
           })
           //.xValue(function(d) { return d.densityValue; })
           //.yValue(function(d) { return d.value })

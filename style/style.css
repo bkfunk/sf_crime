@@ -1,10 +1,12 @@
 
-
+#test-container {
+  float: left;
+}
 .hidden {
   display: none;
 }
 .tract {
-  stroke: #666;
+  stroke: #333;
 }
 .tract:hover,
 .tract.selected {
@@ -66,6 +68,7 @@ circle {
 circle:hover,
 circle.selected {
   opacity: 1;
+  stroke: red;
 }
 .text {
   clear: both;

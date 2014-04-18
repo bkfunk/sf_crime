@@ -1,5 +1,15 @@
-.tract-06075030800 {
+
+
+.hidden {
+  display: none;
+}
+.tract {
+  stroke: #666;
+}
+.tract:hover,
+.tract.selected {
   stroke: red;
+  stroke-width: 2;
 }
 #main {
   clear: both;
@@ -14,11 +24,11 @@
 }
 #scatter-group-container {
   float: left;
-  width: 650px;
-  height: 650px;
+  /*width: 650px;
+  height: 650px;*/
   border: 1px solid blue;
 }
-#map-group-container {
+#map-container {
   float: left;
   /*width: 600px;
   height: 600px;*/
@@ -26,6 +36,7 @@
 }
 #y-density-container {
   float: left;
+  clear: right;
 }
 #scatter-container {
   float: left;
@@ -37,6 +48,7 @@
 }
 #x-density-container {
   float: left;
+  clear: left;
 }
 
 #y-density-slider {
@@ -51,7 +63,8 @@ circle {
   stroke-opacity: .6;
   opacity: .3;
 }
-circle:hover {
+circle:hover,
+circle.selected {
   opacity: 1;
 }
 .text {

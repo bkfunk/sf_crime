@@ -96,7 +96,7 @@
     </div>
     
     <script type="text/javascript">
-      var mapdata, dataset, tracts;
+      var mapdata, dataset, tracts, borders;
       var scatter, xden, yden, map;
       var tractData;
       
@@ -122,20 +122,52 @@
                   (data.y.selected.min <= d.y && d.y <= data.y.selected.max));
         };
         
+        tractData = {
+          index: [] //tracts.features.map(function(d) { return d.id; })
+        };
+        for (i in tracts.features) {
+          var t = tracts.features[i];
+          //var b = borders.coordinates[i];
+          var id = "06075" + t.id; // append state ("06") and county ("075")
+          tractData[id] = t;
+          tractData.index[i] = id;
+          //tractData[id]["border"] = b;
+          tractData[id]["id"] = id;
+        }
+        for (i in dataset) {
+          var t = dataset[i];
+          var id = "0" + t.tract_id; // CSV ID doesn't have initial zero
+          if (tractData.hasOwnProperty(id)) {
+            tractData[id]["data"] = t;
+          }
+        }
+        
+        map = multiMap();
+        
+        
     // Scatter Plot
-        scatter = scatterPlot();
+        scatter = scatterPlot().plotWidth(300).plotHeight(500);
         d3.select("#scatter-container")
             .datum(data)
             .call(scatter);//, data.data);
+        scatter;
         scatter.addMarkerListener("mouseover", function(d, i) {
+          console.log(".tract-0" + d.id);
           d3.select("#info").text("x: " + d.x + " y: " + d.y + " id: " + d.id);
+          map.svg().selectAll(".tract-0" + d.id)
+          .each(function(d, i) { map.triggerFeatureListener("mouseover", d, i, this) });
+              //.triggerFeatureListener("mouseover");
+        });
+        scatter.addMarkerListener("mouseout", function(d, i) {
+          map.svg().selectAll(".tract-0" + d.id).classed("selected", false);
         });
         
     // X-density Plot
-        xden = densityPlot();
+        xden = densityPlot().plotWidth(300).plotHeight(100);
         d3.select("#x-density-container")
           .datum(data)
-          .call(xden, "x");
+          .call(xden, "y");
+        //xden.plotWidth(300).plotHeight(100);
         xden.brushMoveListener(function(brush) {
           scatter.updateAxes("x", brush.extent());
           scatter.updateMarkerPositions(false);
@@ -146,13 +178,22 @@
         });
         
     // Y-density Plot
-        yden = densityPlot().value(function(d) {
-          return d['y'];
-        });
+        yden = densityPlot().plotWidth(100).plotHeight(500)
+          .getValue(function(d) {
+            return d['x'];
+          })
+          //.xValue(function(d) { return d.densityValue; })
+          //.yValue(function(d) { return d.value })
+          .showAxes("y")
+          //.brushDirection("ns")
+          //.brushAxis("y")
+          //.flipAxis("x")
+          .flipAxis(true)
+          .orientation("vertical");
         d3.select("#y-density-container")
           .datum(data)
           .call(yden);
-        yden.rotate(270);
+        //yden.rotate(270);
         yden.brushMoveListener(function(brush) {
           scatter.updateAxes("y", brush.extent());
           scatter.updateMarkerPositions(false);
@@ -163,21 +204,7 @@
         });
         
     // Map Plot
-        tractData = {
-          index: tracts.features.map(function(d) { return d.id; })
-        };
-        for (i in tracts.features) {
-          var t = tracts.features[i];
-          tractData[t.id] = t;
-        }
-        for (i in dataset) {
-          var t = dataset[i];
-          var id = "0" + t.tract_id; // CSV ID doesn't have initial zero
-          if (tractData.hasOwnProperty(id)) {
-            tractData[id]["data"] = t;
-          }
-        }
-        map = multiMap();
+        
         d3.select("#map-container")
           .datum(tractData)
           .call(map);
@@ -190,13 +217,15 @@
         console.log("Loaded JSON");
       };
       queue()
-        .defer(d3.json, "geo/sf_tracts_topo_small.json")
+        //.defer(d3.json, "geo/sf_tracts_topo_small.json")
+        .defer(d3.json, "geo/gz_2010_06_140_00_500k/sf_tracts_full_topo.json")
         .defer(d3.csv, "data/rates/inc_2012.csv")
         .awaitAll(function(error, results) {
           //console.log(results);
           mapdata = results[0];
           dataset = results[1];
           tracts = topojson.feature(mapdata, mapdata.objects.sf_tracts);
+          //borders = topojson.meshArcs(mapdata, mapdata.objects.sf_tracts);//, mapdata.objects.sf_tracts);
           generateVis()
         });
       

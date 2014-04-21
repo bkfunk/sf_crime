@@ -5,6 +5,8 @@
     <title>D3 Test</title>
     <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/cupertino/jquery-ui.css">-->
     <link rel="stylesheet" href="style/style.css">
+      
+    <script type="text/javascript" src="lib/underscore/underscore-min.js"></script>
     <script type="text/javascript" src="lib/d3/d3.js"></script>
     <script type="text/javascript" src="lib/d3/lib/science/science.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/science/science.stats.min.js"></script>
@@ -32,12 +34,6 @@
         }
         return f + "(" + args + ")";
       }
-      function _val(o, k) {
-        if (typeof o !== "undefined")
-          return (o.hasOwnProperty(k)) ? o[k] : null;
-        return null;
-      }
-      
       
       function extractField(dataset, fieldName) {
         // Create field object, starting with the label
@@ -78,13 +74,67 @@
         
         return field;
       }
+      
+      rotateElement = function(element, angle) {
+        
+        // NOTE Rotate cannot be chained
+        var width = element.offsetWidth;
+        var height = element.offsetHeight;
+        var selection = d3.select(element);
+        
+        // modulo out full rotations and convert to radians
+        angle = angle % 360;
+        theta = angle * (Math.PI / 180);
+        //var H = height * Math.cos(theta) + width * Math.sin(theta);
+        //var W = height * Math.sin(theta) + width * Math.cos(theta);
+        //var H = height * Math.sin(theta);
+        //var W = width  * Math.cos(theta);
+        if (0 <= angle && angle < 90) {
+          var dx = height * Math.sin(theta);
+          var dy = 0;
+          //var H = height * Math.cos(theta) + width * Math.sin(theta);
+          //var W = height * Math.sin(theta) + width * Math.cos(theta);
+        
+        } else if (90 <= angle && angle < 180) {
+          var dx = -width * Math.cos(theta) + height * Math.sin(theta);
+          var dy = -height * Math.cos(theta);
+          //var H = height * Math.cos(theta) - width * Math.sin(theta);
+          //var W = height * Math.sin(theta) - width * Math.cos(theta);
+        } else if (180 <= angle && angle < 270) {
+          var dx = -width * Math.cos(theta);
+          var dy = -width * Math.sin(theta) - height * Math.cos(theta);
+          //var H = height * Math.cos(theta) + width * Math.sin(theta);
+          //var W = height * Math.sin(theta) + width * Math.cos(theta);
+        } else {
+          var dx = 0;
+          var dy = -width * Math.sin(theta);
+          //var H = height * Math.cos(theta) - width * Math.sin(theta);
+          //var W = height * Math.sin(theta) - width * Math.cos(theta);
+          
+        }
+        
+        //wScale = Math.abs(W / width);
+        //hScale = Math.abs(H / height);
+        selection.attr("transform", _do("translate", dx, dy) + " "
+                           + _do("rotate", angle));
+        return {"dx" : dx, "dy" : dy};
+      };
+      
     </script>
   </head>
   <body>
     <div id="main">
-      <div id="info">
-        Info
+      <div id="selects">
+        <label for="x-select">X Variable:</label>
+        <select id="x-select"></select>
+        
+        <label for="y-select">Y Variable:</label>
+        <select id="y-select"></select>
+        
+        <label for="map-select">Map Variable:</label>
+        <select id="map-select"></select>
       </div>
+      <div id="info"></div>
       <div id="scatter-group-container">
         
         <div id="scatter-container" class="scatter plot-container">
@@ -109,30 +159,11 @@
       var tractData;
       
       // Initialize vis      
-      function generateVis() {
-/*
-        data = {
-          x: extractField(dataset, "no_car_pct"),
-          y: extractField(dataset, "vehicle theft (rate)"),
-          id: extractField(dataset, "tract_id")
-        }
-        data.data = d3.zip(data.x.values, data.y.values, data.id.values)
-                      .map(function(d) {
-                        return {
-                          x: d[0],
-                          y: d[1],
-                          id: d[2]
-                        };
-                      });
-        
-        data.isSelected = function(d) {
-          return ((data.x.selected.min <= d.x && d.x <= data.x.selected.max) &&
-                  (data.y.selected.min <= d.y && d.y <= data.y.selected.max));
-        };*/
-        
+      function generateVis() {        
         tractData = {
           index: [] //tracts.features.map(function(d) { return d.id; })
         };
+        
         for (i in tracts.features) {
           var t = tracts.features[i];
           //var b = borders.coordinates[i];
@@ -142,30 +173,86 @@
           //tractData[id]["border"] = b;
           tractData[id]["id"] = id;
         }
-        for (i in dataset) {
+        
+        for (i in dataset) { // for each element in the dataset (from CSV)
           var t = dataset[i];
           var id = "0" + t.tract_id; // CSV ID doesn't have initial zero
           if (tractData.hasOwnProperty(id)) {
-            tractData[id]["data"] = t;
+            tractData[id]["data"] = t; // add data to corresponding tract geom.
           }
         }
-        data = tractData.index.map(function (t) {
+        tractData["06075980300"].data = undefined;
+        data = tractData.index.map(function (t) { // get the data attribute
           return tractData[t].data;
-        }).filter(function(d) {
+        }).filter(function(d) { // remove tracts with no data
           return (typeof d !== "undefined");
         });
-        map = multiMap();
         
         
-        var xSeries = "no_car_pct";
-        var ySeries = "vehicle theft (rate)";
+            
+        /*
+        _keys(data[0]).forEach(function(field) {
+          d3.select("#x-select").append
+        });*/
+        
+        
+        //var xSeries = "no_car_pct";
+        //var ySeries = "vehicle theft (rate)";
+        //var mapSeries = "vehicle theft (rate)";
         var idSeries = "tract_id";
         
         var xValue = function(d, i) { return +d[xSeries]; };
         var yValue = function(d, i) { return +d[ySeries]; };
         var idValue = function(d, i) { return "0" + d[idSeries]; };
+        var mapField = function(d, i) { return mapSeries; };
+        
+        var dataFilter = function(name) {
+          if (name.indexOf("rent") !== -1 ||
+              name.indexOf("hisp") !== -1) return false; // excl. specific vars
+          if (name.indexOf("_moe") !== -1) return false; // excl. margins of err
+          if (name.indexOf("(rate)") !== -1) return true; // incl. rates
+          if (name.indexOf("_pct") !== -1) return true; // incl. pcts
+          if (name.indexOf("hh") !== -1 || // incl. specific variables
+              name.indexOf("fertility") !== -1) return true;
+          return false;
+        };
+        d3.selectAll("select").selectAll("option")
+            .data(d3.keys(data[0]).filter(dataFilter))
+          .enter()
+            .append("option")
+            .attr("value", function(d) { return d; })
+            .text(function(d) { return d; });
+        d3.select("#x-select").node().selectedIndex = 0;
+        d3.select("#y-select").node().selectedIndex = 1;
+        d3.select("#map-select").node().selectedIndex = 0;
+        
+        var xSeries = d3.select("#x-select").node().value;
+        var ySeries = d3.select("#y-select").node().value;
+        var mapSeries = d3.select("#map-select").node().value;
+        
+        
+    // Map Plot
+        map = multiMap();
+        
+        d3.select("#map-container")
+          .datum(tractData)
+          .call(map);
+        
+        map.addFeatureListener("mouseover", function(d, i) {
+          //that.parentNode.appendChild(that);
+          //console.log("EXT MOUSOVER", d3.selectAll(".tract-" + d.id));
+          d3.selectAll(".tract-" + d.id)
+            .classed("selected", true).each(function() {
+              this.parentNode.appendChild(this); });
+        }).addFeatureListener("mouseout", function(d, i) {
+          //console.log("MOUSOUT", d);
+          //if (typeof d.data !== "undefined")
+            d3.selectAll(".tract-" + d.id) //idValue(d.data))
+              .classed("selected", false);
+        });
+        
     // Scatter Plot
-        scatter = scatterPlot().plotWidth(300).plotHeight(300)
+        scatter = scatterPlot().plotWidth(400).plotHeight(400)
           .xValue(function(d, i) { return +d[xSeries]; })
           .yValue(function(d, i) { return +d[ySeries]; })
           .idValue(function(d, i) { return "0" + d[idSeries]; });
@@ -175,7 +262,6 @@
             .call(scatter);
         
         scatter.addMarkerListener("mouseover", function(d, i) {
-          console.log(".tract-" + idValue(d));
           d3.select("#info").text("x: " + xValue(d) + " y: " + yValue(d) + " id: " + idValue(d));
           map.svg().selectAll(".tract-" + idValue(d))
             .each(function(d, i) {
@@ -187,12 +273,13 @@
         });
         
     // X-density Plot
-        xden = densityPlot().plotWidth(300).plotHeight(100)
-          .getValue(function(d, i) { return +d[xSeries]; });
+        xden = densityPlot().plotWidth(400).plotHeight(100)
+          .getValue(xValue);
+          
         d3.select("#x-density-container")
           .datum(data)
           .call(xden);
-        //xden.plotWidth(300).plotHeight(100);
+          
         xden.brushMoveListener(function(brush) {
           scatter.updateAxes("x", brush.extent());
           scatter.updateMarkerPositions(false);
@@ -203,22 +290,18 @@
         });
         
     // Y-density Plot
-        yden = densityPlot().plotWidth(100).plotHeight(300)
+        yden = densityPlot().plotWidth(100).plotHeight(400)
           .getValue(function(d) {
             return +d[ySeries];
           })
-          //.xValue(function(d) { return d.densityValue; })
-          //.yValue(function(d) { return d.value })
           .showAxes("y")
-          //.brushDirection("ns")
-          //.brushAxis("y")
-          //.flipAxis("x")
           .flipAxis(true)
           .orientation("vertical");
+          
         d3.select("#y-density-container")
           .datum(data)
           .call(yden);
-        //yden.rotate(270);
+          
         yden.brushMoveListener(function(brush) {
           scatter.updateAxes("y", brush.extent());
           scatter.updateMarkerPositions(false);
@@ -228,21 +311,31 @@
           scatter.updateMarkerPositions(true);
         });
         
-    // Map Plot
+    
         
-        d3.select("#map-container")
-          .datum(tractData)
-          .call(map);
-        map.addFeatureListener("mouseover", function(d, i) {
-          //that.parentNode.appendChild(that);
-          console.log("EXT MOUSOVER", d3.selectAll(".tract-" + d.id));
-          d3.selectAll(".tract-" + d.id)
-            .classed("selected", true).each(function() {
-              this.parentNode.appendChild(this); });
-        }).addFeatureListener("mouseout", function(d, i) {
-          //console.log("MOUSOUT", d);
-          d3.selectAll(".tract-" + idValue(d.data))
-            .classed("selected", false) });
+        
+        // Variable selectors
+        
+        d3.selectAll("select")
+          .on("change", function(a, d, i) {
+              if (d3.event.target.id === "x-select") {
+                xSeries = d3.event.target.value;
+                scatter.updateData().updatePlot();
+                xden.getValue(xValue).updateData().updatePlot();
+              }
+              if (d3.event.target.id === "y-select") {
+                ySeries = d3.event.target.value;
+                scatter.updateData().updatePlot();
+                yden.getValue(yValue).updateData().updatePlot();
+              }
+              if (d3.event.target.id === "map-select") {
+                mapSeries = d3.event.target.value;
+                map.field(mapField);
+                map.updateData().updateMap();
+                scatter.updateMarkerPositions();
+              }
+          })
+          
       }
       
       var loadedCSV = function(error, result) {
@@ -263,6 +356,7 @@
           //borders = topojson.meshArcs(mapdata, mapdata.objects.sf_tracts);//, mapdata.objects.sf_tracts);
           generateVis()
         });
+        
       
       //d3.json("geo/gz_2010_06_140_00_500k/sf_tracts.json", function(json) {
       /*

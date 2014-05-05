@@ -33,4 +33,4 @@ The d3 code is intentionally pretty agnostic about the precise nature of the dat
 
 
 
-<a id="note1"></a>__NB__: Per the dataset owner's post in the discussion on the [data site](https://data.sfgov.org/Public-Safety/SFPD-Reported-Incidents-2003-to-Present/dyj4-n68b), "The only data not included in this database is the homicide data."
+<a id="note1">*</a>__NB__: Per the dataset owner's post in the discussion on the [data site](https://data.sfgov.org/Public-Safety/SFPD-Reported-Incidents-2003-to-Present/dyj4-n68b), "The only data not included in this database is the homicide data."

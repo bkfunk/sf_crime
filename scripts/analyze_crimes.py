@@ -11,23 +11,23 @@ sfpd = pd.DataFrame() # empty DataFrame
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
 # Get list of all CSV files
 if len(sys.argv) > 1:
-  incident_csvs = glob("geocoded/*" + sys.argv[1] + ".csv")
+    incident_csvs = glob("geocoded/*" + sys.argv[1] + ".csv")
 else:
-  incident_csvs = glob("geocoded/*.csv")
+    incident_csvs = glob("geocoded/*.csv")
 
 nfiles = 0
 for file in (incident_csvs):
-  # Read in csv file and concat to our working DataFrame
-  print("Reading in file: %s" % file)
-  try:
-    # Note: we set ignore_index=True because we don't care about the obs.'s
-    # index in the original file
-    sfpd = pd.concat([sfpd, pd.read_csv(file)], ignore_index=True)
-  except:
-    print("Error reading file: %s" % file)
-  else:
-    nfiles += 1  
-  
+    # Read in csv file and concat to our working DataFrame
+    print("Reading in file: %s" % file)
+    try:
+        # Note: we set ignore_index=True because we don't care about the obs.'s
+        # index in the original file
+        sfpd = pd.concat([sfpd, pd.read_csv(file)], ignore_index=True)
+    except:
+        print("Error reading file: %s" % file)
+    else:
+        nfiles += 1  
+    
 print("Read in %d files" % nfiles)
 
 # Get census tract, which is just the first 10 characters of the FIPS code
@@ -231,25 +231,25 @@ arr = pd.merge(g_arr.sum().reset_index(), census, on='tract_id')
 
 # Take columns for counts and create rates
 def create_rates(df, columns, denom='hh_pop', per=1000, lower=True):
-  for c in columns:
-    if lower:
-      new = str.lower(c) + " (rate)"
-    else:
-      new = c + " (rate)"
-    df[new] = df[c] / (df[denom] / float(per))
+    for c in columns:
+        if lower:
+            new = str.lower(c) + " (rate)"
+        else:
+            new = c + " (rate)"
+        df[new] = df[c] / (df[denom] / float(per))
 
 # Remove columns whose mean below a certain rate
 def remove_insig_cols(df, columns, threshold=0.1):
-  to_drop = df[columns].apply(lambda x: x.mean() < threshold, axis=0)
-  print("Dropping columns:")
-  print(to_drop[to_drop])
-  return df.drop(df[to_drop[to_drop].index], axis=1)
+    to_drop = df[columns].apply(lambda x: x.mean() < threshold, axis=0)
+    print("Dropping columns:")
+    print(to_drop[to_drop])
+    return df.drop(df[to_drop[to_drop].index], axis=1)
 
 # Create rates for category counts, i.e. cols that are all caps (plus punct)
 def clean_misc(df, threshold=0.1):
-  create_rates(df, df.filter(regex='^[A-Z ,.-/]+$'))
-  return remove_insig_cols(df, df.filter(like="(rate)").columns, threshold)
-  
+    create_rates(df, df.filter(regex='^[A-Z ,.-/]+$'))
+    return remove_insig_cols(df, df.filter(like="(rate)").columns, threshold)
+    
 inc = clean_misc(inc)
 res = clean_misc(res, 0.05)
 arr = clean_misc(arr, 0.01)

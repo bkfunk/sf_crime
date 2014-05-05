@@ -1,0 +1,29 @@
+#!bin/bash
+
+shpfile="geo/tl_2010_06_tract10/tl_2010_06_tract10.shp"
+jsonfile="geo/sf_tracts.json"
+topojsonfile="geo/sf_tracts_topo.json"
+small_topojsonfile="geo/sf_tracts_topo_small.json"
+
+rm $jsonfile || echo "Could not remove file, may not exist: $jsonfile"
+ogrinfo $shpfile -al -so
+
+ogr2ogr \
+  -f GeoJSON \
+  -where 'COUNTYFP10="075"' \
+  $jsonfile \
+  $shpfile
+  
+ogrinfo $jsonfile -al -so
+
+topojson \
+  --id-property GEOID10 \
+  -o $topojsonfile \
+  $jsonfile
+
+# There's some error here with -o
+topojson \
+  --id-property GEOID10 \
+  --simplify-proportion=0.5 \ 
+  -o $small_topojsonfile \
+  -- $jsonfile

@@ -153,6 +153,12 @@
       </div>
       <div id="map-container">
       </div>
+      
+      <div id="explanation">
+        <p>I built this as a way to explore how to visualize several dimensions of data while also geographic patterns.</p>
+        <p>You can use the handles on the density plots of the X and Y variable to restrict the scatter plot to a certain range. Doing so will also highlight the plotted points on the map by setting all tracts that are not on the scatter plot to grayscale. Use the select elements at the top to change variables; note that you can have the map showing one of the two variables on the scatter plot, or you could set it to a completely different variable.</p>
+        <p>This is still a work in progress, in particular in terms of design/prettifying!</p>
+      </div>
     </div>
     
     <script type="text/javascript">
@@ -201,6 +207,7 @@
         var yValue = function(d, i) { return +d[ySeries]; };
         var idValue = function(d, i) { return "0" + d[idSeries]; };
         var mapField = function(d, i) { return mapSeries; };
+        var mapValue = function(d, i) { return +d['data'][mapSeries]; };
         
         
         /* Set up selector inputs */
@@ -241,17 +248,41 @@
           .datum(tractData)
           .call(map);
         
+        /*var mapTooltip = d3.tip()
+                        .attr('class', 'tooltip tooltip-map')
+                        .html(function(d) {
+                          console.log(d);
+                          var result =
+                            "<ul class='tooltip-list'>" +
+                              "<li><span class='label label-id'>" + idSeries + ":</span>" + idValue(d) + "</li>" +
+                              "<li><span class='label label-x'>" + mapSeries + ":</span> " + mapValue(d) + "</li>" +
+                            "</ul>";
+                          return result;
+                        });*/
+                        
+        /*d3.select("#map-container .main-svg").call(mapTooltip);*/
+        var mapTooltip = d3.select('#map-container')
+                            .append("div")
+                              .attr("class", "tooltip tooltip-map")
+                              .style("z-index", 10)
+                              .style("visibility", "hidden")
+                              .style("position", "absolute")
+                              .text("tooltip");
+        
+        
         map.addFeatureListener("mouseover", function(d, i) {
           //that.parentNode.appendChild(that);
           //console.log("EXT MOUSOVER", d3.selectAll(".tract-" + d.id));
           d3.selectAll(".tract-" + d.id)
             .classed("selected", true).each(function() {
               this.parentNode.appendChild(this); });
+          mapTooltip.show(d);
         }).addFeatureListener("mouseout", function(d, i) {
           //console.log("MOUSOUT", d);
           //if (typeof d.data !== "undefined")
             d3.selectAll(".tract-" + d.id) //idValue(d.data))
               .classed("selected", false);
+            mapTooltip.hide(d);
         });
         
     // Scatter Plot
@@ -264,12 +295,12 @@
             .datum(data)
             .call(scatter);
         
-        var scatter_tip = d3.tip()
-                            .attr('class', 'd3-tip')
+        var scatterToolip = d3.tip()
+                            .attr('class', 'tooltip tooltip-scatter')
                             .html(function(d) {
                               console.log(d);
                               var result =
-                                "<ul class='tip-list'>" +
+                                "<ul class='tooltip-list'>" +
                                   "<li><span class='var var-id'>" + idSeries + ":</span>" + idValue(d) + "</li>" +
                                   "<li><span class='var var-x'>" + xSeries + ":</span> " + xValue(d) + "</li>" +
                                   "<li><span class='var var-y'>" + ySeries + ":</span> " + yValue(d) + "</li>" +
@@ -277,7 +308,7 @@
                               return result;
                             });
                             
-        d3.select("#scatter-container .main-svg").call(scatter_tip);
+        d3.select("#scatter-container .main-svg").call(scatterToolip);
         
         scatter.addMarkerListener("mouseover", function(d, i) {
           d3.select("#info").text("x: " + xValue(d) + " y: " + yValue(d) + " id: " + idValue(d));
@@ -285,11 +316,13 @@
             .each(function(d, i) {
               map.triggerFeatureListener("mouseover", d, i, this) });
           d3.selectAll(".tract-" + idValue(d)).classed("selected", true);
-          scatter_tip.show(d);
+          scatterToolip.show(d);
+          mapTooltip.show(d);
         });
         scatter.addMarkerListener("mouseout", function(d, i) {
           d3.selectAll(".tract-" + idValue(d)).classed("selected", false);
-          scatter_tip.hide(d);
+          scatterToolip.hide(d);
+          mapTooltip.hide(d);
         });
         
         

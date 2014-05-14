@@ -7,13 +7,15 @@
     <link rel="stylesheet" href="style/style.css">
       
     <!--<script type="text/javascript" src="lib/underscore/underscore-min.js"></script>-->
-    <script type="text/javascript" src="lib/d3/d3.js"></script>
+    <!--script type="text/javascript" src="lib/d3/d3.js"></script-->
+    <script type="text/javascript" src="bower_components/d3/d3.js"></script>
+    <script type="text/javascript" src="bower_components/d3-tip/index.js"></script>
     <script type="text/javascript" src="lib/d3/lib/science/science.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/science/science.stats.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/colorbrewer/colorbrewer.js"></script>
     <script type="text/javascript" src="lib/topojson/topojson.v1.min.js"></script>
     <script type="text/javascript" src="lib/queue/queue.min.js"></script>
-    <script type="text/javascript" src="lib/charts/twoway.js"></script>
+    <!--script type="text/javascript" src="lib/charts/twoway.js"></script-->
     <script type="text/javascript" src="lib/charts/density.js"></script>
     <script type="text/javascript" src="lib/charts/scatter.js"></script>
     <script type="text/javascript" src="lib/charts/map.js"></script>
@@ -151,6 +153,12 @@
       </div>
       <div id="map-container">
       </div>
+      
+      <div id="explanation">
+        <p>I built this as a way to explore how to visualize several dimensions of data while also geographic patterns.</p>
+        <p>You can use the handles on the density plots of the X and Y variable to restrict the scatter plot to a certain range. Doing so will also highlight the plotted points on the map by setting all tracts that are not on the scatter plot to grayscale. Use the select elements at the top to change variables; note that you can have the map showing one of the two variables on the scatter plot, or you could set it to a completely different variable.</p>
+        <p>This is still a work in progress, in particular in terms of design/prettifying!</p>
+      </div>
     </div>
     
     <script type="text/javascript">
@@ -181,7 +189,9 @@
             tractData[id]["data"] = t; // add data to corresponding tract geom.
           }
         }
-        tractData["06075980300"].data = undefined;
+        
+        tractData["06075980300"].data = undefined; // Golden Gate Park! Numbers are all weird, so we exclude it.
+        
         data = tractData.index.map(function (t) { // get the data attribute
           return tractData[t].data;
         }).filter(function(d) { // remove tracts with no data
@@ -191,11 +201,18 @@
 
         var idSeries = "tract_id";
         
+        // These functions can be used to dynamically get the right field
+        // from the data.
         var xValue = function(d, i) { return +d[xSeries]; };
         var yValue = function(d, i) { return +d[ySeries]; };
         var idValue = function(d, i) { return "0" + d[idSeries]; };
         var mapField = function(d, i) { return mapSeries; };
+        var mapValue = function(d, i) { return +d['data'][mapSeries]; };
         
+        
+        /* Set up selector inputs */
+        
+        // Remove certain variables we don't want
         var dataFilter = function(name) {
           if (name.indexOf("rent") !== -1 ||
               name.indexOf("hisp") !== -1) return false; // excl. specific vars
@@ -206,12 +223,15 @@
               name.indexOf("fertility") !== -1) return true;
           return false;
         };
+        
+        // Bind data to selectors
         d3.selectAll("select").selectAll("option")
             .data(d3.keys(data[0]).filter(dataFilter))
           .enter()
             .append("option")
             .attr("value", function(d) { return d; })
             .text(function(d) { return d; });
+            
         d3.select("#x-select").node().selectedIndex = 0;
         d3.select("#y-select").node().selectedIndex = 1;
         d3.select("#map-select").node().selectedIndex = 0;
@@ -228,17 +248,41 @@
           .datum(tractData)
           .call(map);
         
+        /*var mapTooltip = d3.tip()
+                        .attr('class', 'tooltip tooltip-map')
+                        .html(function(d) {
+                          console.log(d);
+                          var result =
+                            "<ul class='tooltip-list'>" +
+                              "<li><span class='label label-id'>" + idSeries + ":</span>" + idValue(d) + "</li>" +
+                              "<li><span class='label label-x'>" + mapSeries + ":</span> " + mapValue(d) + "</li>" +
+                            "</ul>";
+                          return result;
+                        });*/
+                        
+        /*d3.select("#map-container .main-svg").call(mapTooltip);*/
+        var mapTooltip = d3.select('#map-container')
+                            .append("div")
+                              .attr("class", "tooltip tooltip-map")
+                              .style("z-index", 10)
+                              .style("visibility", "hidden")
+                              .style("position", "absolute")
+                              .text("tooltip");
+        
+        
         map.addFeatureListener("mouseover", function(d, i) {
           //that.parentNode.appendChild(that);
           //console.log("EXT MOUSOVER", d3.selectAll(".tract-" + d.id));
           d3.selectAll(".tract-" + d.id)
             .classed("selected", true).each(function() {
               this.parentNode.appendChild(this); });
+          mapTooltip.show(d);
         }).addFeatureListener("mouseout", function(d, i) {
           //console.log("MOUSOUT", d);
           //if (typeof d.data !== "undefined")
             d3.selectAll(".tract-" + d.id) //idValue(d.data))
               .classed("selected", false);
+            mapTooltip.hide(d);
         });
         
     // Scatter Plot
@@ -251,16 +295,37 @@
             .datum(data)
             .call(scatter);
         
+        var scatterToolip = d3.tip()
+                            .attr('class', 'tooltip tooltip-scatter')
+                            .html(function(d) {
+                              console.log(d);
+                              var result =
+                                "<ul class='tooltip-list'>" +
+                                  "<li><span class='var var-id'>" + idSeries + ":</span>" + idValue(d) + "</li>" +
+                                  "<li><span class='var var-x'>" + xSeries + ":</span> " + xValue(d) + "</li>" +
+                                  "<li><span class='var var-y'>" + ySeries + ":</span> " + yValue(d) + "</li>" +
+                                "</ul>";
+                              return result;
+                            });
+                            
+        d3.select("#scatter-container .main-svg").call(scatterToolip);
+        
         scatter.addMarkerListener("mouseover", function(d, i) {
           d3.select("#info").text("x: " + xValue(d) + " y: " + yValue(d) + " id: " + idValue(d));
           map.svg().selectAll(".tract-" + idValue(d))
             .each(function(d, i) {
               map.triggerFeatureListener("mouseover", d, i, this) });
           d3.selectAll(".tract-" + idValue(d)).classed("selected", true);
+          scatterToolip.show(d);
+          mapTooltip.show(d);
         });
         scatter.addMarkerListener("mouseout", function(d, i) {
           d3.selectAll(".tract-" + idValue(d)).classed("selected", false);
+          scatterToolip.hide(d);
+          mapTooltip.hide(d);
         });
+        
+        
         
     // X-density Plot
         xden = densityPlot().plotWidth(400).plotHeight(100)

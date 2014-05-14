@@ -1,3 +1,5 @@
+[&laquo; Brian Karfunkel home](http://bkfunk.github.io)
+
 SF Data Traction
 ========
 

@@ -7,13 +7,15 @@
     <link rel="stylesheet" href="style/style.css">
       
     <!--<script type="text/javascript" src="lib/underscore/underscore-min.js"></script>-->
-    <script type="text/javascript" src="lib/d3/d3.js"></script>
+    <!--script type="text/javascript" src="lib/d3/d3.js"></script-->
+    <script type="text/javascript" src="bower_components/d3/d3.js"></script>
+    <script type="text/javascript" src="bower_components/d3-tip/index.js"></script>
     <script type="text/javascript" src="lib/d3/lib/science/science.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/science/science.stats.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/colorbrewer/colorbrewer.js"></script>
     <script type="text/javascript" src="lib/topojson/topojson.v1.min.js"></script>
     <script type="text/javascript" src="lib/queue/queue.min.js"></script>
-    <script type="text/javascript" src="lib/charts/twoway.js"></script>
+    <!--script type="text/javascript" src="lib/charts/twoway.js"></script-->
     <script type="text/javascript" src="lib/charts/density.js"></script>
     <script type="text/javascript" src="lib/charts/scatter.js"></script>
     <script type="text/javascript" src="lib/charts/map.js"></script>
@@ -181,7 +183,9 @@
             tractData[id]["data"] = t; // add data to corresponding tract geom.
           }
         }
-        tractData["06075980300"].data = undefined;
+        
+        tractData["06075980300"].data = undefined; // Golden Gate Park! Numbers are all weird, so we exclude it.
+        
         data = tractData.index.map(function (t) { // get the data attribute
           return tractData[t].data;
         }).filter(function(d) { // remove tracts with no data
@@ -191,11 +195,17 @@
 
         var idSeries = "tract_id";
         
+        // These functions can be used to dynamically get the right field
+        // from the data.
         var xValue = function(d, i) { return +d[xSeries]; };
         var yValue = function(d, i) { return +d[ySeries]; };
         var idValue = function(d, i) { return "0" + d[idSeries]; };
         var mapField = function(d, i) { return mapSeries; };
         
+        
+        /* Set up selector inputs */
+        
+        // Remove certain variables we don't want
         var dataFilter = function(name) {
           if (name.indexOf("rent") !== -1 ||
               name.indexOf("hisp") !== -1) return false; // excl. specific vars
@@ -206,12 +216,15 @@
               name.indexOf("fertility") !== -1) return true;
           return false;
         };
+        
+        // Bind data to selectors
         d3.selectAll("select").selectAll("option")
             .data(d3.keys(data[0]).filter(dataFilter))
           .enter()
             .append("option")
             .attr("value", function(d) { return d; })
             .text(function(d) { return d; });
+            
         d3.select("#x-select").node().selectedIndex = 0;
         d3.select("#y-select").node().selectedIndex = 1;
         d3.select("#map-select").node().selectedIndex = 0;
@@ -251,16 +264,35 @@
             .datum(data)
             .call(scatter);
         
+        var scatter_tip = d3.tip()
+                            .attr('class', 'd3-tip')
+                            .html(function(d) {
+                              console.log(d);
+                              var result =
+                                "<ul class='tip-list'>" +
+                                  "<li><span class='var var-id'>" + idSeries + ":</span>" + idValue(d) + "</li>" +
+                                  "<li><span class='var var-x'>" + xSeries + ":</span> " + xValue(d) + "</li>" +
+                                  "<li><span class='var var-y'>" + ySeries + ":</span> " + yValue(d) + "</li>" +
+                                "</ul>";
+                              return result;
+                            });
+                            
+        d3.select("#scatter-container .main-svg").call(scatter_tip);
+        
         scatter.addMarkerListener("mouseover", function(d, i) {
           d3.select("#info").text("x: " + xValue(d) + " y: " + yValue(d) + " id: " + idValue(d));
           map.svg().selectAll(".tract-" + idValue(d))
             .each(function(d, i) {
               map.triggerFeatureListener("mouseover", d, i, this) });
           d3.selectAll(".tract-" + idValue(d)).classed("selected", true);
+          scatter_tip.show(d);
         });
         scatter.addMarkerListener("mouseout", function(d, i) {
           d3.selectAll(".tract-" + idValue(d)).classed("selected", false);
+          scatter_tip.hide(d);
         });
+        
+        
         
     // X-density Plot
         xden = densityPlot().plotWidth(400).plotHeight(100)

@@ -1,222 +1,93 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
   <head>
     <meta charset="utf-8">
-    <title>D3 Test</title>
-    <script type="text/javascript" src="d3/d3.js"></script>
-    <script type="text/javascript" src="d3/lib/science/science.min.js"></script>
-    <script type="text/javascript" src="d3/lib/science/science.stats.min.js"></script>
-    <style>
-    circle {
-      opacity: .5;
-    }
-    circle.active {
-      opacity: 1;
-    }
-    .text {
-      clear: both;
-    }
-    svg {
-      float: left;
-      border: 1px solid black;
-    }
-    .axis path,
-    .axis line {
-        fill: none;
-        stroke: black;
-        shape-rendering: crispEdges;
-    }
-    
-    .axis text {
-        font-family: sans-serif;
-        font-size: 11px;
-    }
-    .line {
-      fill: none;
-      stroke: #000;
-      stroke-width: 1.5px;
-    }
-    </style>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Brian Karfunkel — SF Data Traction by bkfunk</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
   </head>
   <body>
-    <div class="scatter-section">
-      <div class="text">Tract ID: <span class="tract"></span></div>
-    </div>
-    <div class="density-section">
-    </div>
-    
-    <script type="text/javascript">
-      function _do(f) {
-        /* I get tired of all the "fn_name(" + arg + ")" business,
-          so I use _do to take the (string) name of a function, then any number
-          of arguments, and append them together into a string */
-        var args = ""
-        for (i=1; i < arguments.length; i++) {
-          args += (i != 1) ? ", " + arguments[i] : arguments[i];
-        }
-        return f + "(" + args + ")";
-      }
-    
-      var dataset;
-      var kden;
-      var margin = {top: 20, right: 10, bottom: 20, left: 40};
-      var w = 600 - margin.left - margin.right;
-      var h = 300 - margin.top - margin.bottom;
-      var r = w / 150;
-      var padding = 2* r;
-      
-      var x_data;
-      var y_data;
-      
-      var svg = d3.select(".scatter-section")
-            .append("svg")
-            .attr("width", w + margin.left + margin.right)
-            .attr("height", h + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", _do("translate", margin.left, margin.top));
-            //.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-            
-      var svg2 = d3.select(".density-section")
-            .append("svg")
-            .attr("width", w + margin.left + margin.right)
-            .attr("height", h + margin.top + margin.bottom)
-            .append("g")
-            .attr("transform", _do("translate", margin.left, margin.top));
-      
-      function mouseOver(i, id, x, y) {
-        d3.select(".tract").text(id + ": (X: " + x.toFixed(2) + ", Y: " + parseFloat(y).toFixed(2) + ")");
-        d3.select(".circle-" + i).classed("active", true);
-      }
-      function mouseOut(i) {
-        d3.select(".tract").text("");
-        d3.select(".circle-" + i).classed("active", false);
-      }
-      
-      function generateVis() {
-        var x = 'no_car_pct';
-        var y = 'vehicle theft (rate)';
-        var xScale = d3.scale.linear()
-                              .domain([0, d3.max(dataset, function(d) { return parseFloat(d[x]); })])
-                              .range([0, w])
-                              .nice();
-        var yScale = d3.scale.linear()
-                              .domain([0, d3.max(dataset, function(d) { return parseFloat(d[y]); })])
-                              .range([h, 0])
-                              .nice();
-        var xAxis = d3.svg.axis()
-                    .scale(xScale)
-                    .orient("bottom");
-        //Define Y axis
-        var yAxis = d3.svg.axis()
-                  .scale(yScale)
-                  .orient("left")
-                  .ticks(5);
-        
-        circles = svg.selectAll("circle")
-                      .data(dataset)
-                      .enter()
-                      .append("circle");
-        circles.attr({
-          class: function(d, i) { return "circle-" + i; },
-          cx: function(d, i) { return xScale(parseFloat(d[x])); },
-          cy: function(d, i) { return yScale(parseFloat(d[y])); },
-          r: r,
-          fill: "blue",
-          stroke: "darkblue",
-          "stroke-width": r/3,
-          "fill-opacity": .2,
-          "stroke-opacity": .5,
-          onmouseover: function(d, i) { return _do("mouseOver", i, d['tract_id'], d[x], d[y]); },
-          onmouseout: function(d, i) { return "mouseOut(" + i + ")"; }
-          /*onmouseover: function(d, i) { return "mouseOver(" + d['tract_id'] + ", " + i + ")"; },
-          onmouseout: function(d, i) { return "mouseOut(" + i + ")"; }*/
-        });
-        
-        svg.append("g")
-          .attr("class", "axis")
-          .attr("transform", _do("translate", 0, h))
-          .call(xAxis);
-        svg.append("g")
-          .attr("class", "axis")
-          .call(yAxis);
-          
-          
-        // Density
-        var xDenScale = d3.scale.linear()
-                              .domain([0, d3.max(dataset, function(d) { return parseFloat(d[x]); })])
-                              .range([0, w])
-                              .nice();
-        var xDenScale2 = d3.scale.linear()
-                              .domain([0, d3.max(dataset, function(d) { return parseFloat(d[y]); })])
-                              .range([0, w])
-                              .nice();
-        var yDenScale = d3.scale.linear()
-                              .domain([0, d3.max(kden(x_data), function(d) { return parseFloat(d[1]); })])
-                              .range([h/2, 0])
-                              .nice();
-        
-        var xLine = d3.svg.line()
-          .x(function(d) { return xDenScale(d[0]); })
-          .y(function(d) { return yDenScale(d[1]); });
-        svg2.append("path")
-          .datum(kden(x_data).sort(function(a,b) { return a[0]-b[0]; }))
-          .attr("class", "line")
-          .attr("transform", _do("translate", 0, h/2))
-          .attr("d", xLine);
-        var yLine = d3.svg.line()
-          .x(function(d) { return xDenScale2(d[0]); })
-          .y(function(d) { return yDenScale(d[1]); });
-        kden2 = science.stats.kde().sample(y_data);
-        var yDenScale = d3.scale.linear()
-                              .domain([0, d3.max(kden2(y_data), function(d) { return parseFloat(d[1]); })])
-                              .range([h/2, 0])
-                              .nice();
-        svg2.append("path")
-          .datum(kden2(y_data).sort(function(a,b) { return a[0]-b[0]; }))
-          .attr("class", "line")
-          .attr("transform", _do("translate", 0, 0))
-          .attr("d", yLine);
-        
-        svg2.append("g")
-          .attr("class", "axis")
-          .attr("transform", _do("translate", 0, h))
-          .call(xAxis);
-        
-      }
-      /*
-      d3.json("SF_tracts_50p.json", function(json) {
-        var projection = d3.geo.mercator()
-                          .center([-122.4, 37.8])
-                          .scale(50000);
-                        //.clipExtent([[-122.612285,37.706721],[-122.28178,37.929823999999996]]);
-        var path = d3.geo.path().projection(projection);
-        console.log(json.geometries);
-        console.log(projection);
-        svg.selectAll("path")
-           .data(json.geometries)
-           .enter()
-           .append("path")
-           .attr("d", path);
-      });*/
+    <div class="wrapper">
+      <header>
+        <h1>Brian Karfunkel — SF Data Traction</h1>
+        <p>Analysis of crime data in SF</p>
 
-      d3.csv("test.csv", function(error, data) {
-      
-        if (error) {  //If error is not null, something went wrong.
-          console.log(error);  //Log the error.
-        } else {      //If no error, the file loaded correctly. Yay!
-          console.log(data);   //Log the data.
-          
-          //Include other code to execute after successful file load here
-          dataset = data;
-          x_data = dataset.map(function(x) { return parseFloat(x['no_car_pct']); });
-          y_data = dataset.map(function(x) { return parseFloat(x['vehicle theft (rate)']); });
-          //dataset.map(function(x) { return parseFloat(x['no_car_pct']); }));
-          kden = science.stats.kde().sample(x_data);
-          generateVis();
-          //hideLoadingMsg();
-        }
-      });
-      
-    </script>
+        <p class="view"><a href="https://github.com/bkfunk/sf_data_traction">View the Project on GitHub <small>bkfunk/sf_data_traction</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/bkfunk/sf_data_traction/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/bkfunk/sf_data_traction/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/bkfunk/sf_data_traction">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <p><a href="http://bkfunk.github.io">« Brian Karfunkel home</a></p>
+
+<h1>
+<a name="sf-data-traction" class="anchor" href="#sf-data-traction"><span class="octicon octicon-link"></span></a>SF Data Traction</h1>
+
+<p>SF provides a lot of interesting data <a href="https://data.sfgov.org/">online</a>, including data on all incidents reported to SFPD (including incidents reported by citizens and by officers themselves).<a href="#note1">*</a> The actual data file, which contains incidents since 2003, can be found <a href="http://apps.sfgov.org/datafiles/view.php?file=Police/sfpd_incident_all_csv.zip">here</a>. Note that this is a broader universe than, say, the FBI's <a href="http://www.fbi.gov/about-us/cjis/ucr/ucr">Uniform Crime Reporting</a> database, since it includes reported incidents that were deemed by officers to not, in fact, be criminal activity (as well as warnings, etc.). In particular, the data includes latitude and longitude fields for all incidents.</p>
+
+<p>I wanted to see what I could learn from this data, in particular how crime reporting relates to a number of other characteristics. Here, I match incidents for 2012 to Census-Tract-level data from the US Census's 2012 American Community Survey. This allows me to turn incidents into <em>incident rates</em>, since I have population by census tract. It also allows me to look at, say, the relationship between poverty levels and crime rates, or the relationship between the percentage of people who don't have a car and the car theft rate. In order to visualize this disparate data, I create a combination scatter plot and map using d3.js. The final visualization can be viewed here: <a href="http://bkfunk.github.io/sf_data_traction/crimestats.html">http://bkfunk.github.io/sf_data_traction/crimestats.html</a> <a href="https://github.com/bkfunk/sf_data_traction/blob/master/crimestats.html">(source)</a>.</p>
+
+<h2>
+<a name="cleaning-the-data" class="anchor" href="#cleaning-the-data"><span class="octicon octicon-link"></span></a>Cleaning the Data</h2>
+
+<p>The data cleaning scripts are located in the <a href="https://github.com/bkfunk/sf_data_traction/tree/master/scripts"><code>/scripts/</code></a> directory.</p>
+
+<ul>
+<li>
+<code>clean_census.py</code> loads several data files downloaded from the Census, renaming variables and merging the datasets together.</li>
+<li>
+<code>prep_incidents.py</code> loads the CSV files downloaded from data.sfgov.org and uses the latitude and longitude fields to associate the appropriate Census tract ID, using the FCC's Census Bock API to do the geocoding.</li>
+<li>
+<code>analyze_crimes.py</code> merges the SFPD data with the Census data, cleans certain variables, drops other variables, and then creates 3 output CSV fles:
+
+<ul>
+<li>
+<code>inc_2012.csv</code> -- all incidents in 2012</li>
+<li>
+<code>res_2012.csv</code> -- all <em>resolved</em> incidents in 2012</li>
+<li>
+<code>arr_2012.csv</code> -- all <em>arrests</em> in 2012
+Currently, I only look at the incidents file (<code>inc_2012</code>)</li>
+</ul>
+</li>
+</ul><h2>
+<a name="visualizing-the-data" class="anchor" href="#visualizing-the-data"><span class="octicon octicon-link"></span></a>Visualizing the Data</h2>
+
+<p>I create some plot templates (located in <a href="https://github.com/bkfunk/sf_data_traction/tree/master/lib/charts"><code>lib/charts/</code></a>) to ease plotting. <code>crimestats.html</code> uses these templates to create a scatter plot, a brush-able distribution plot for each axis on the scatter, and a map showing a choropleth of the data.</p>
+
+<p>I got a shapefile for the SF Census Tracts from the <a href="http://www2.census.gov/geo/tiger/GENZ2010/gz_2010_06_140_00_500k.zip">US Census site</a>. I then converted the shapefile to TopoJSON using the <code>bin/create_topojson</code> bash script. I load that TopoJSON file, along with the incidents data, into d3, and merge those two in the javascript so that both geo data and the incident data are bound to each tract element.</p>
+
+<p>Using the visualization, you can select variables to be plotted on:</p>
+
+<ul>
+<li>The scatter plot's x-axis</li>
+<li>The scatter plot's y-axis</li>
+<li>The map's choropleth</li>
+</ul><p>All three variables can be set indipendently, meaning you can visualize three separate variables in three ways, or one variable on the scatter plot and another on both the scatter plot and choropleth. This allows you to describe some complex relationships in a number of ways.</p>
+
+<p>Mousing over a point in the scatter plot will highlight the corresponding Census tract on the map, and vice versa. Using the brushes on the axis density plots, you can select only a portion of each of the scatter's variables' distributions. For example, you could zoom in on the y-values in the lower part of the distribution. On the choropleth at the right, any tracts that are no longer visible on the scatter plot will switch from a green color scale to a gray color scale. This allows you to, say, zoom in on tracts with high rates of assault and view the distribution of percentage of households with young residents within those high-assault areas and outside those areas.</p>
+
+<p>The d3 code is intentionally pretty agnostic about the precise nature of the data. In order to reuse the visualization with different data, you would just need to get other census-tract-level data with a "tract_id" and another TopoJSON file with the tracts for a different city or region. With a little modification, you could use any type of data associated with any type of map boundary.</p>
+
+<p><a>*</a><strong>NB</strong>: Per the dataset owner's post in the discussion on the <a href="https://data.sfgov.org/Public-Safety/SFPD-Reported-Incidents-2003-to-Present/dyj4-n68b">data site</a>, "The only data not included in this database is the homicide data."</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/bkfunk">bkfunk</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+>>>>>>> ab5fe0f651a61500d2ef6f836fd42b0aa1c8d357
   </body>
 </html>

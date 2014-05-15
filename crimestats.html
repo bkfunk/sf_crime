@@ -4,12 +4,12 @@
     <meta charset="utf-8">
     <title>D3 Test</title>
     <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/cupertino/jquery-ui.css">-->
-    <link rel="stylesheet" href="style/style.css">
+    <link rel="stylesheet" href="style/less/style.css">
       
     <!--<script type="text/javascript" src="lib/underscore/underscore-min.js"></script>-->
-    <!--script type="text/javascript" src="lib/d3/d3.js"></script-->
-    <script type="text/javascript" src="bower_components/d3/d3.js"></script>
-    <script type="text/javascript" src="bower_components/d3-tip/index.js"></script>
+    <script type="text/javascript" src="lib/d3/d3.js"></script>
+    <!--script type="text/javascript" src="bower_components/d3/d3.js"></script>
+    <script type="text/javascript" src="bower_components/d3-tip/index.js"></script-->
     <script type="text/javascript" src="lib/d3/lib/science/science.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/science/science.stats.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/colorbrewer/colorbrewer.js"></script>
@@ -19,6 +19,8 @@
     <script type="text/javascript" src="lib/charts/density.js"></script>
     <script type="text/javascript" src="lib/charts/scatter.js"></script>
     <script type="text/javascript" src="lib/charts/map.js"></script>
+    
+    <script type="text/javascript" src="lib/tooltip.js"></script>
     
     <!--<script type="text/javascript" src="lib/charts/test_scatter.js"></script>
     <!--<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
@@ -122,6 +124,29 @@
         return {"dx" : dx, "dy" : dy};
       };
       
+      
+      function getOffsetRect(elem) {
+          // Get bounding box (doesn't take scroll into consideration)
+          var box = elem.getBoundingClientRect()
+          
+          var body = document.body
+          var docElem = document.documentElement
+          
+          // Calculate scroll (different versions based on browsers)
+          var scrollTop = window.pageYOffset || docElem.scrollTop || body.scrollTop
+          var scrollLeft = window.pageXOffset || docElem.scrollLeft || body.scrollLeft
+          
+          // document can be shifted in ID
+          var clientTop = docElem.clientTop || body.clientTop || 0
+          var clientLeft = docElem.clientLeft || body.clientLeft || 0
+          
+          // (4)
+          var top  = box.top +  scrollTop - clientTop
+          var left = box.left + scrollLeft - clientLeft
+          
+          return { top: Math.round(top), left: Math.round(left),
+                  width: Math.round(box.width), height: Math.round(box.height) }
+      }
     </script>
   </head>
   <body>
@@ -248,26 +273,15 @@
           .datum(tractData)
           .call(map);
         
-        /*var mapTooltip = d3.tip()
-                        .attr('class', 'tooltip tooltip-map')
-                        .html(function(d) {
-                          console.log(d);
-                          var result =
-                            "<ul class='tooltip-list'>" +
-                              "<li><span class='label label-id'>" + idSeries + ":</span>" + idValue(d) + "</li>" +
-                              "<li><span class='label label-x'>" + mapSeries + ":</span> " + mapValue(d) + "</li>" +
-                            "</ul>";
-                          return result;
-                        });*/
-                        
-        /*d3.select("#map-container .main-svg").call(mapTooltip);*/
-        var mapTooltip = d3.select('#map-container')
-                            .append("div")
-                              .attr("class", "tooltip tooltip-map")
-                              .style("z-index", 10)
-                              .style("visibility", "hidden")
-                              .style("position", "absolute")
-                              .text("tooltip");
+        var mapTooltip = Tooltip().direction("n");
+        console.log(tractData);
+        
+        // Set custom tooltip directions for weird tracts
+        tractData["06075017902"].direction = "e"; // Tresure island, and two tiny pieces near bayview
+        tractData["06075060100"].direction = "e"; // Presidio
+        
+        d3.select("#map-container")
+          .call(mapTooltip);
         
         
         map.addFeatureListener("mouseover", function(d, i) {
@@ -276,13 +290,14 @@
           d3.selectAll(".tract-" + d.id)
             .classed("selected", true).each(function() {
               this.parentNode.appendChild(this); });
-          mapTooltip.show(d);
+          mapTooltip.show(this, [[idSeries, idValue(d)],
+                                 [mapSeries, mapValue(d)]], d["direction"]);
         }).addFeatureListener("mouseout", function(d, i) {
           //console.log("MOUSOUT", d);
           //if (typeof d.data !== "undefined")
             d3.selectAll(".tract-" + d.id) //idValue(d.data))
               .classed("selected", false);
-            mapTooltip.hide(d);
+            //mapTooltip.hide(d);
         });
         
     // Scatter Plot
@@ -295,20 +310,161 @@
             .datum(data)
             .call(scatter);
         
-        var scatterToolip = d3.tip()
-                            .attr('class', 'tooltip tooltip-scatter')
-                            .html(function(d) {
-                              console.log(d);
-                              var result =
-                                "<ul class='tooltip-list'>" +
-                                  "<li><span class='var var-id'>" + idSeries + ":</span>" + idValue(d) + "</li>" +
-                                  "<li><span class='var var-x'>" + xSeries + ":</span> " + xValue(d) + "</li>" +
-                                  "<li><span class='var var-y'>" + ySeries + ":</span> " + yValue(d) + "</li>" +
-                                "</ul>";
-                              return result;
-                            });
-                            
-        d3.select("#scatter-container .main-svg").call(scatterToolip);
+        var scatterTooltip = Tooltip();
+        d3.select("#scatter-container")
+          .call(scatterTooltip);
+        /*var scatterTooltip = d3.select("#scatter-container")
+                                .append("div")
+                                  .attr("class", "tooltip tooltip-scatter")
+                                  .style("position", "absolute")
+                                  .style("z-index", "10")
+                                  .style("visibility", "hidden");*/
+        
+        //var scatterToolip = d3.tip()
+        //                    .attr('class', 'tooltip tooltip-scatter')
+        //                    .html(function(d) {
+        //                      console.log(d);
+        //                      var result =
+        //                        "<ul class='tooltip-list'>" +
+        //                          "<li><span class='var var-id'>" + idSeries + ":</span>" + idValue(d) + "</li>" +
+        //                          "<li><span class='var var-x'>" + xSeries + ":</span> " + xValue(d) + "</li>" +
+        //                          "<li><span class='var var-y'>" + ySeries + ":</span> " + yValue(d) + "</li>" +
+        //                        "</ul>";
+        //                      return result;
+        //                    });
+        //                    
+        //d3.select("#scatter-container .main-svg").call(scatterToolip);
+        /*
+        function showTooltip(tooltip, triggerNode, html, direction) {
+          direction = direction || "e";
+          
+          var bbox = getOffsetRect(triggerNode);
+          var width = tooltip.property("clientWidth"),
+              height = tooltip.property("clientHeight");
+          
+          var clippath = d3.select(triggerNode.ownerSVGElement)
+                        .select(".clip-path")
+                        .node();
+          console.log(clippath);
+          var scene = (clippath) ? getOffsetRect(clippath) :
+                                    getOffsetRect(triggerNode.ownerSVGElement);
+                        
+          //var svgWidth = triggerNode.ownerSVGElement.clientWidth,
+          //    svgHeight = triggerNode.ownerSVGElement.clientHeight;
+          
+          var left, top;
+          var horizontal, vertical;
+          
+          var e_left = bbox.left + bbox.width;
+          var w_left = bbox.left - width;
+          var c_left = bbox.left + (bbox.width - width)/2;
+          
+          if ((direction.indexOf("e") !== -1 &&
+                  e_left + width <= scene.left + scene.width) ||
+              (direction.indexOf("w") !== -1 && w_left < scene.left)) { // EAST
+            // If EAST and left of right edge
+            // or WEST and left of left edge (out of bounds)
+            // then EAST
+            
+            horizontal = "east";
+            left = e_left;
+          } else if ((direction.indexOf("w") !== -1 && w_left >= scene.left) ||
+                     (direction.indexOf("e") !== -1 &&
+                        e_left + width > scene.left + scene.width)) { // WEST
+            // If WEST and right of left edge
+            // or EAST and right of right edge (out of bounds)
+            // then WEST
+            
+            horizontal = "west";
+            left = w_left;
+          } else { // CENTER
+            if (c_left + width > scene.left + scene.width) { // too far right
+              horizontal = "west";
+              left = w_left;
+            } else if (c_left < scene.left) { // too far left
+              horizontal = "east";
+              left = e_left;
+            } else {
+              horizontal = "center";
+              left = c_left;
+            }
+          }
+          
+          var n_top = bbox.top - height;
+          var s_top = bbox.top + bbox.height;
+          var c_top = bbox.top + (bbox.height - height)/2;
+      
+          if ((direction.indexOf("n") !== -1 && n_top >= scene.top) ||
+              (direction.indexOf("s") !== -1 &&
+                  s_top + height > scene.top + scene.height)) {
+            // If NORTH and below top
+            // or SOUTH and below bottom (out of bounds)
+            // then: NORTH
+            
+            vertical = "north";
+            top = n_top;
+          } else if ((direction.indexOf("s") !== -1 &&
+                          s_top + heigth <= scene.top + scene.height) ||
+                     (direction.indexOf("n") !== -1 && n_top < scene.top)) {
+            // If SOUTH and above bottom
+            // or NORTH and above top (out of bounds)
+            // then: SOURTH
+            
+            vertical = "south";
+            top = s_top;
+          } else { // CENTER
+            if (c_top < scene.top) { // too far up
+              vertical = "south";
+              top = s_top;
+            } else if (c_top + height > scene.top + scene.height) {  // too far down
+              vertical = "north"
+              top = n_top;
+            } else {
+              vertical = "center";
+              top = c_top;
+            }
+          }
+          //console.log(scene);
+          console.log("Top:", top, "Left:", left);
+          console.log("Vertical: ", vertical, "Horizontal: ", horizontal);
+          tooltip.style("visibility", "visible")
+                        .style("left", left + "px")
+                        .style("top", top + "px")
+                        .classed(horizontal, true)
+                        .classed(vertical, true)
+                        .html("<div class='tooltip-body'></div>");
+          
+          var tooltipBody = tooltip.select('.tooltip-body');
+          tooltipBody.html(html);
+          
+        }*/
+        /*
+        top:
+          bottom 100%
+          left 50%
+          border-bottom-color
+          margin-left
+        
+        right:
+          top: 50%
+          left: 100%
+          border-left-color
+          margin-top
+          
+        bottom:
+          top 100%
+          left: 50%
+          border-top-color
+          margin-left
+        
+        left:
+          top: 50%
+          right: 100%
+          border-right-color
+          margin-top
+        */
+        
+        
         
         scatter.addMarkerListener("mouseover", function(d, i) {
           d3.select("#info").text("x: " + xValue(d) + " y: " + yValue(d) + " id: " + idValue(d));
@@ -316,13 +472,24 @@
             .each(function(d, i) {
               map.triggerFeatureListener("mouseover", d, i, this) });
           d3.selectAll(".tract-" + idValue(d)).classed("selected", true);
-          scatterToolip.show(d);
-          mapTooltip.show(d);
-        });
+          scatterTooltip.show(this, [[idSeries, idValue(d)],
+                                      [xSeries, xValue(d)],
+                                      [ySeries, yValue(d)]]);
+          //scatterToolip.show(d);
+          //mapTooltip.show(d);
+          
+          /*var html = "<ul class='tooltip-list'>" +
+                      "<li><span class='var var-id'>" + idSeries + ":</span>" + idValue(d) + "</li>" +
+                      "<li><span class='var var-x'>" + xSeries + ":</span> " + xValue(d) + "</li>" +
+                      "<li><span class='var var-y'>" + ySeries + ":</span> " + yValue(d) + "</li>" +
+                    "</ul>";
+          showTooltip(scatterTooltip, this, html, "w");*/
+          
+        });                
         scatter.addMarkerListener("mouseout", function(d, i) {
           d3.selectAll(".tract-" + idValue(d)).classed("selected", false);
-          scatterToolip.hide(d);
-          mapTooltip.hide(d);
+          //scatterToolip.hide(d);
+          //mapTooltip.hide(d);
         });
         
         

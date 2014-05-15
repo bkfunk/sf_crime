@@ -1,0 +1,368 @@
+/* CSS crunched with Crunch - http://crunchapp.net/ */
+.tract {
+  stroke: navy;
+  stroke-width: 1;
+  fill: url("#diagonalHatch");
+}
+/*GREENS*/
+.plotted.q0-9 {
+  fill: #f7fcf5;
+}
+.plotted.q1-9 {
+  fill: #e5f5e0;
+}
+.plotted.q2-9 {
+  fill: #c7e9c0;
+}
+.plotted.q3-9 {
+  fill: #a1d99b;
+}
+.plotted.q4-9 {
+  fill: #74c476;
+}
+.plotted.q5-9 {
+  fill: #41ab5d;
+}
+.plotted.q6-9 {
+  fill: #238b45;
+}
+.plotted.q7-9 {
+  fill: #006d2c;
+}
+.plotted.q8-9 {
+  fill: #00441b;
+}
+/*BLUES
+.tract.q0-9{fill:rgb(247,251,255)}
+.tract.q1-9{fill:rgb(222,235,247)}
+.tract.q2-9{fill:rgb(198,219,239)}
+.tract.q3-9{fill:rgb(158,202,225)}
+.tract.q4-9{fill:rgb(107,174,214)}
+.tract.q5-9{fill:rgb(66,146,198)}
+.tract.q6-9{fill:rgb(33,113,181)}
+.tract.q7-9{fill:rgb(8,81,156)}
+.tract.q8-9{fill:rgb(8,48,107)}*/
+/* Greys */
+.q0-9 {
+  fill: #ffffff;
+}
+.q1-9 {
+  fill: #f0f0f0;
+}
+.q2-9 {
+  fill: #d9d9d9;
+}
+.q3-9 {
+  fill: #bdbdbd;
+}
+.q4-9 {
+  fill: #969696;
+}
+.q5-9 {
+  fill: #737373;
+}
+.q6-9 {
+  fill: #525252;
+}
+.q7-9 {
+  fill: #252525;
+}
+.q8-9 {
+  fill: #000000;
+}
+/* Disabled tracts */
+.qNA {
+  pointer-events: none;
+}
+#test-container {
+  float: left;
+}
+.hidden {
+  display: none;
+}
+.hatchRect {
+  fill: #AAA;
+  stroke: none;
+}
+.hatchPath {
+  stroke: #666;
+}
+.legend .label,
+.legend .header-label {
+  font-family: sans-serif;
+  font-size: xx-small;
+  alignment-baseline: central;
+}
+.label-tick {
+  stroke: black;
+  stroke-dasharray: 3;
+}
+/*
+.tract.plotted {
+  stroke: #333;
+  stroke-width: 2;
+}*/
+.tract:hover,
+.tract.selected {
+  stroke: red;
+  stroke-width: 2;
+}
+#main {
+  clear: both;
+  float: left;
+  margin: auto;
+}
+#info {
+  clear: both;
+  margin: auto;
+  text-align: center;
+  height: 1.2em;
+}
+#scatter-group-container {
+  float: left;
+  /*width: 650px;
+  height: 650px;*/
+  /*border: 1px solid blue;*/
+}
+#map-container {
+  float: left;
+  /*width: 600px;
+  height: 600px;*/
+  /*border: 1px solid gray;*/
+}
+#y-density-container {
+  float: left;
+  clear: right;
+}
+#scatter-container {
+  float: left;
+  clear: left;
+}
+#corner-container {
+  clear: right;
+  float: left;
+}
+#x-density-container {
+  float: left;
+  clear: left;
+}
+#y-density-slider {
+  float: left;
+}
+#explanation {
+  clear: both;
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 30px 0 30px 0;
+}
+/* Tooltips */
+.tooltip {
+  padding: 0;
+  margin: 0px;
+  min-width: 2em;
+  min-height: 2em;
+  pointer-events: none;
+}
+.tooltip-body {
+  padding: .5em;
+  margin: 0em;
+  background-color: #b0c4de;
+  border-style: solid;
+  border-color: #666666;
+  -webkit-border-radius: 0.5em;
+  -moz-border-radius: 0.5em;
+  border-radius: 0.5em;
+  position: relative;
+  display: block;
+}
+.tooltip-list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  font-size: .9em;
+}
+.north .tooltip-body {
+  margin-bottom: 0.5em;
+}
+.east .tooltip-body {
+  margin-left: 0.5em;
+}
+.south .tooltip-body {
+  margin-top: 0.5em;
+}
+.west .tooltip-body {
+  margin-left: 0.5em;
+}
+.north.west .tooltip-body {
+  border-bottom-right-radius: 0;
+  -webkit-border-bottom-right-radius: 0;
+  -moz-border-radius-bottomright: 0;
+  margin-bottom: 0;
+  margin-right: 0;
+}
+.north.east .tooltip-body {
+  border-bottom-left-radius: 0;
+  -webkit-border-bottom-left-radius: 0;
+  -moz-border-radius-bottomleft: 0;
+  margin-bottom: 0;
+  margin-left: 0;
+}
+.south.west .tooltip-body {
+  border-top-right-radius: 0;
+  -webkit-border-top-right-radius: 0;
+  -moz-border-radius-topright: 0;
+  margin-top: 0;
+  margin-right: 0;
+}
+.south.east .tooltip-body {
+  border-top-left-radius: 0;
+  -webkit-border-top-left-radius: 0;
+  -moz-border-radius-topleft: 0;
+  margin-top: 0;
+  margin-left: 0;
+}
+.tooltip-list::after,
+.tooltip-list::before {
+  border: solid transparent;
+  content: '';
+  display: block;
+  height: 0;
+  width: 0;
+  position: absolute;
+  margin: 0;
+}
+/* Triangle above (fill color) */
+.tooltip-list:after {
+  border-color: transparent;
+  border-width: 0.5em;
+}
+/* Triangle below (border color) */
+.tooltip-list:before {
+  border-color: transparent;
+  border-width: 0.78284271em;
+  /* = after width + sqrt(2)*border width */
+}
+.east .tooltip-list:after {
+  border-right-color: #b0c4de;
+}
+.east .tooltip-list:before {
+  border-right-color: #666666;
+}
+.west .tooltip-list:after {
+  border-left-color: #b0c4de;
+}
+.west .tooltip-list:before {
+  border-left-color: #666666;
+}
+.east .tooltip-list:after,
+.east .tooltip-list:before {
+  top: 50%;
+  right: 100%;
+}
+.west .tooltip-list:after,
+.west .tooltip-list:before {
+  top: 50%;
+  left: 100%;
+}
+.east .tooltip-list:after,
+.west .tooltip-list:after {
+  margin-top: -0.5em;
+}
+.east .tooltip-list:before,
+.west .tooltip-list:before {
+  margin-top: -0.78284271em;
+}
+.north .tooltip-list:after {
+  border-top-color: #b0c4de;
+}
+.north .tooltip-list:before {
+  border-top-color: #666666;
+}
+.south .tooltip-list:after {
+  border-bottom-color: #b0c4de;
+}
+.south .tooltip-list:before {
+  border-bottom-color: #666666;
+}
+.north .tooltip-list:after,
+.north .tooltip-list:before {
+  top: 100%;
+  left: 50%;
+}
+.south .tooltip-list:after,
+.south .tooltip-list:before {
+  bottom: 100%;
+  left: 50%;
+}
+.north .tooltip-list:after,
+.south .tooltip-list:after {
+  margin-left: -0.5em;
+}
+.north .tooltip-list:before,
+.south .tooltip-list:before {
+  margin-left: -0.78284271em;
+}
+.north.west .tooltip-list:after,
+.north.west .tooltip-list:before,
+.north.east .tooltip-list:after,
+.north.east .tooltip-list:before,
+.south.west .tooltip-list:after,
+.south.west .tooltip-list:before,
+.south.east .tooltip-list:after,
+.south.east .tooltip-list:before {
+  border-color: transparent;
+}
+circle {
+  fill: blue;
+  fill-opacity: .4;
+  stroke: darkblue;
+  stroke-opacity: .6;
+  opacity: .3;
+}
+circle:hover,
+circle.selected {
+  fill-opacity: .5;
+  opacity: 1;
+  stroke: red;
+  stroke-width: 2;
+}
+.text {
+  clear: both;
+}
+svg {
+  float: left;
+  /*border: 1px dashed lightgray;*/
+}
+.axis path,
+.axis line {
+  fill: none;
+  stroke: black;
+  shape-rendering: crispEdges;
+}
+.axis text {
+  font-family: sans-serif;
+  font-size: 11px;
+}
+.line {
+  fill: none;
+  stroke: #999;
+  stroke-width: 1px;
+}
+.area {
+  fill: lightblue;
+  stroke-width: 0;
+  fill-opacity: .5;
+}
+#xden-highlight .line,
+#yden-highlight .line,
+.highlight-line {
+  stroke-width: 2px;
+  stroke: #333;
+  stroke-opacity: 1;
+}
+.brush .extent {
+  stroke: steelblue;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}

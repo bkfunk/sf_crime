@@ -3,29 +3,31 @@
   <head>
     <meta charset="utf-8">
     <title>D3 Test</title>
-    <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/cupertino/jquery-ui.css">-->
-    <link rel="stylesheet" href="style/less/style.css">
       
     <!--<script type="text/javascript" src="lib/underscore/underscore-min.js"></script>-->
-    <script type="text/javascript" src="lib/d3/d3.js"></script>
-    <!--script type="text/javascript" src="bower_components/d3/d3.js"></script>
-    <script type="text/javascript" src="bower_components/d3-tip/index.js"></script-->
+    <script type="text/javascript" src="lib/d3/d3.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/science/science.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/science/science.stats.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/colorbrewer/colorbrewer.js"></script>
     <script type="text/javascript" src="lib/topojson/topojson.v1.min.js"></script>
     <script type="text/javascript" src="lib/queue/queue.min.js"></script>
-    <!--script type="text/javascript" src="lib/charts/twoway.js"></script-->
-    <script type="text/javascript" src="lib/charts/density.js"></script>
-    <script type="text/javascript" src="lib/charts/scatter.js"></script>
-    <script type="text/javascript" src="lib/charts/map.js"></script>
+    <script type="text/javascript" src="lib/jquery/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="lib/jquery-ui/js/jquery-ui-1.10.4.custom.min.js"></script>
+    <script type="text/javascript" src="lib/jquery.selectBoxIt/src/javascripts/jquery.selectBoxIt.min.js"></script>
     
-    <script type="text/javascript" src="lib/tooltip.js"></script>
     
-    <!--<script type="text/javascript" src="lib/charts/test_scatter.js"></script>
-    <!--<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-    <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>-->
+    <script type="text/javascript" src="src/js/charts/density.js"></script>
+    <script type="text/javascript" src="src/js/charts/scatter.js"></script>
+    <script type="text/javascript" src="src/js/charts/map.js"></script>
+    <script type="text/javascript" src="src/js/tooltip.js"></script>
+    
+    
     <!--<script src="http://d3js.org/queue.v1.min.js"></script>-->
+    
+    <link rel="stylesheet" href="lib/jquery.selectBoxIt/src/stylesheets/jquery.selectBoxIt.css">
+    <link rel="stylesheet" href="lib/jquery-ui/css/no-theme/jquery-ui-1.10.4.custom.css">  
+    
+    <link rel="stylesheet" href="style/less/style.css">
     
     <script type="text/javascript">
       function _do(f) {
@@ -147,17 +149,17 @@
           return { top: Math.round(top), left: Math.round(left),
                   width: Math.round(box.width), height: Math.round(box.height) }
       }
+      
+      
+      
     </script>
   </head>
   <body>
     <div id="main">
       <div id="mode">
-        <label for="incidents">Incidents</label>
-        <input type='radio' name="mode" value="incidents" id="incidents"><br>
-        <label for="resolved">Resolved</label>
-        <input type='radio' name="mode" value="resolved" id="resolved"><br>
-        <label for="arrests">Arrests</label>
-        <input type='radio' name="mode" value="arrests" id="arrests">
+        <input type='radio' name="mode" value="incidents" id="incidents"><label for="incidents">Incidents</label>
+        <input type='radio' name="mode" value="resolved" id="resolved"><label for="resolved">Resolved</label>
+        <input type='radio' name="mode" value="arrests" id="arrests"><label for="arrests">Arrests</label>
       </div>
       <div id="selects">
         <label for="x-select">X Variable:</label>
@@ -195,6 +197,10 @@
     </div>
     
     <script type="text/javascript">
+      $(function() {
+        $( "#mode" ).buttonset();
+      });
+    
       var mapdata, dataset, tracts, borders;
       var scatter, xden, yden, map;
       var tractData;
@@ -504,7 +510,7 @@
                 scatter.updateMarkerPositions();
               }
           })
-          
+          $("select").selectBoxIt();
       }
       
       var loadedCSV = function(error, result) {

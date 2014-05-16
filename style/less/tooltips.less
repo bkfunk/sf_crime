@@ -41,10 +41,10 @@
   font-size: .9em;
 }
 
-.north .tooltip-body { margin-bottom: @arrow-width; }
-.east .tooltip-body { margin-left: @arrow-width; }
-.south .tooltip-body { margin-top: @arrow-width; }
-.west .tooltip-body { margin-left: @arrow-width; }
+.north .tooltip-body { margin-bottom: sqrt(2) * @arrow-width; }
+.east .tooltip-body { margin-left: sqrt(2) * @arrow-width; }
+.south .tooltip-body { margin-top: sqrt(2) * @arrow-width; }
+.west .tooltip-body { margin-right: sqrt(2) * @arrow-width; }
 
 .north.west .tooltip-body {
     border-bottom-right-radius: 0;
@@ -144,4 +144,17 @@
 .south.east .tooltip-list:after,
 .south.east .tooltip-list:before {
     border-color: transparent;
+}
+.off-screen .tooltip-list:after,
+.off-screen .tooltip-list:before {
+    border-color: transparent;
+    
+}
+
+.off-screen .tooltip-body {
+    
+    background-color: #999;
+    -webkit-border-radius: @border-radius !important;
+    -moz-border-radius:  @border-radius !important;
+    border-radius:  @border-radius !important;
 }

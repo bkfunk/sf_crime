@@ -183,16 +183,16 @@
   font-size: .9em;
 }
 .north .tooltip-body {
-  margin-bottom: 0.5em;
+  margin-bottom: 0.70710678em;
 }
 .east .tooltip-body {
-  margin-left: 0.5em;
+  margin-left: 0.70710678em;
 }
 .south .tooltip-body {
-  margin-top: 0.5em;
+  margin-top: 0.70710678em;
 }
 .west .tooltip-body {
-  margin-left: 0.5em;
+  margin-right: 0.70710678em;
 }
 .north.west .tooltip-body {
   border-bottom-right-radius: 0;
@@ -312,6 +312,16 @@
 .south.east .tooltip-list:after,
 .south.east .tooltip-list:before {
   border-color: transparent;
+}
+.off-screen .tooltip-list:after,
+.off-screen .tooltip-list:before {
+  border-color: transparent;
+}
+.off-screen .tooltip-body {
+  background-color: #999;
+  -webkit-border-radius: 0.5em !important;
+  -moz-border-radius: 0.5em !important;
+  border-radius: 0.5em !important;
 }
 circle {
   fill: blue;

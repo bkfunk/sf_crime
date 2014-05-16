@@ -151,6 +151,14 @@
   </head>
   <body>
     <div id="main">
+      <div id="mode">
+        <label for="incidents">Incidents</label>
+        <input type='radio' name="mode" value="incidents" id="incidents"><br>
+        <label for="resolved">Resolved</label>
+        <input type='radio' name="mode" value="resolved" id="resolved"><br>
+        <label for="arrests">Arrests</label>
+        <input type='radio' name="mode" value="arrests" id="arrests">
+      </div>
       <div id="selects">
         <label for="x-select">X Variable:</label>
         <select id="x-select"></select>
@@ -234,6 +242,69 @@
         var mapField = function(d, i) { return mapSeries; };
         var mapValue = function(d, i) { return +d['data'][mapSeries]; };
         
+        // The first two digits of the tract ID are the state
+        // The next three are the county code
+        // the remainder, divided by 100, are the actual tract number
+        var tractNumber = function(id) { return parseFloat(id.slice(5)) / 100; };
+        
+        var labels = {
+          "hh_size": "Avg. # of people per household",
+          "hh_pop": "Population",
+          "foreign_pct": "Pct. foreign born",
+          "hh": "Number of Households",
+          "badenglish_pct": 'Pct. pop. who speak English less than "very well"',
+          "same_house_pct": "Pct. Lived in Same House 1 Yr. Ago",
+          "ba_grad_pct": "Pct. of pop. 25+ y.o. w/ BA or higher",
+          "disab_pct": "Pct. disabled",
+          "hs_grad_pct": "Pct. of pop 25+ y.o. w/ HS degree/GED or higher",
+          "noncitizen_pct": "Pct. Noncitizen",
+          "nonenglish_pct": "Pct. who don't speak English at home",
+          "hh_old_pct": "Pct. of Households w/ Resident Aged 65+",
+          "hh_youth_pct": "Pct. of Households w/ Resident Aged <18",
+          "fertility": "Pct. of Women Aged 15-50 who gave birth in last 12 mo.",
+          "school_pct": "Pct. of pop. 3+ y.o. in school",
+          "med_hh_inc": "Median household income",
+          "mean_hh_inc": "Mean household income",
+          "health_ins_pct": "Pct. of civilian, noninstitutional pop. w/ health insurance",
+          "unemp_pct": "Pct. of pop. 16+ y.o. unemployed",
+          "poverty_pct": "Pct. of families below poverty line",
+          "no_car_pct": "Pct. of households w/ no vehicle available",
+          "unaff_mortgage_pct": "unaff_mortgage_pct",
+          "crowded_pct": "crowded_pct",
+          "moved_in_post_2010_pct": "moved_in_post_2010_pct", 
+          "med_rooms_per_hh": "med_rooms_per_hh", 
+          "white_pct": "white_pct", 
+          "afam_pct": "afam_pct", 
+          "asian_pct": "asian_pct", 
+          "arson (rate)": "arson (rate)", 
+          "assault (rate)": "assault (rate)", 
+          "burglary (rate)": "burglary (rate)", 
+          "disorderly conduct (rate)": "disorderly conduct (rate)", 
+          "driving under the influence (rate)": "driving under the influence (rate)", 
+          "drug/narcotic (rate)": "drug/narcotic (rate)", 
+          "drunkenness (rate)": "drunkenness (rate)", 
+          "embezzlement (rate)": "embezzlement (rate)", 
+          "forgery/counterfeiting (rate)": "forgery/counterfeiting (rate)", 
+          "fraud (rate)": "fraud (rate)", 
+          "kidnapping (rate)": "kidnapping (rate)", 
+          "larceny/theft (rate)": "larceny/theft (rate)", 
+          "liquor laws (rate)": "liquor laws (rate)", 
+          "loitering (rate)": "loitering (rate)", 
+          "missing person (rate)": "missing person (rate)", 
+          "other offenses (rate)": "other offenses (rate)", 
+          "prostitution (rate)": "prostitution (rate)", 
+          "recovered vehicle (rate)": "recovered vehicle (rate)", 
+          "robbery (rate)": "robbery (rate)", 
+          "runaway (rate)": "runaway (rate)", 
+          "sex offenses, forcible (rate)": "sex offenses, forcible (rate)", 
+          "suicide (rate)": "suicide (rate)", 
+          "suspicious occ (rate)": "suspicious occ (rate)", 
+          "trespass (rate)": "trespass (rate)", 
+          "vandalism (rate)": "vandalism (rate)", 
+          "vehicle theft (rate)": "vehicle theft (rate)", 
+          "warrants (rate)": "warrants (rate)", 
+          "weapon laws (rate)": "weapon laws (rate)",
+        };
         
         /* Set up selector inputs */
         
@@ -248,6 +319,7 @@
               name.indexOf("fertility") !== -1) return true;
           return false;
         };
+        console.log(d3.keys(data[0]).filter(dataFilter));
         
         // Bind data to selectors
         d3.selectAll("select").selectAll("option")
@@ -255,7 +327,8 @@
           .enter()
             .append("option")
             .attr("value", function(d) { return d; })
-            .text(function(d) { return d; });
+            .attr("title", function(d) { return labels[d] || d; })
+            .text(function(d) { return d + ": " + labels[d] || d; });
             
         d3.select("#x-select").node().selectedIndex = 0;
         d3.select("#y-select").node().selectedIndex = 1;
@@ -284,21 +357,7 @@
           .call(mapTooltip);
         
         
-        map.addFeatureListener("mouseover", function(d, i) {
-          //that.parentNode.appendChild(that);
-          //console.log("EXT MOUSOVER", d3.selectAll(".tract-" + d.id));
-          d3.selectAll(".tract-" + d.id)
-            .classed("selected", true).each(function() {
-              this.parentNode.appendChild(this); });
-          mapTooltip.show(this, [[idSeries, idValue(d)],
-                                 [mapSeries, mapValue(d)]], d["direction"]);
-        }).addFeatureListener("mouseout", function(d, i) {
-          //console.log("MOUSOUT", d);
-          //if (typeof d.data !== "undefined")
-            d3.selectAll(".tract-" + d.id) //idValue(d.data))
-              .classed("selected", false);
-            //mapTooltip.hide(d);
-        });
+        
         
     // Scatter Plot
         scatter = scatterPlot().plotWidth(400).plotHeight(400)
@@ -313,157 +372,45 @@
         var scatterTooltip = Tooltip();
         d3.select("#scatter-container")
           .call(scatterTooltip);
-        /*var scatterTooltip = d3.select("#scatter-container")
-                                .append("div")
-                                  .attr("class", "tooltip tooltip-scatter")
-                                  .style("position", "absolute")
-                                  .style("z-index", "10")
-                                  .style("visibility", "hidden");*/
         
-        //var scatterToolip = d3.tip()
-        //                    .attr('class', 'tooltip tooltip-scatter')
-        //                    .html(function(d) {
-        //                      console.log(d);
-        //                      var result =
-        //                        "<ul class='tooltip-list'>" +
-        //                          "<li><span class='var var-id'>" + idSeries + ":</span>" + idValue(d) + "</li>" +
-        //                          "<li><span class='var var-x'>" + xSeries + ":</span> " + xValue(d) + "</li>" +
-        //                          "<li><span class='var var-y'>" + ySeries + ":</span> " + yValue(d) + "</li>" +
-        //                        "</ul>";
-        //                      return result;
-        //                    });
-        //                    
-        //d3.select("#scatter-container .main-svg").call(scatterToolip);
-        /*
-        function showTooltip(tooltip, triggerNode, html, direction) {
-          direction = direction || "e";
-          
-          var bbox = getOffsetRect(triggerNode);
-          var width = tooltip.property("clientWidth"),
-              height = tooltip.property("clientHeight");
-          
-          var clippath = d3.select(triggerNode.ownerSVGElement)
-                        .select(".clip-path")
-                        .node();
-          console.log(clippath);
-          var scene = (clippath) ? getOffsetRect(clippath) :
-                                    getOffsetRect(triggerNode.ownerSVGElement);
-                        
-          //var svgWidth = triggerNode.ownerSVGElement.clientWidth,
-          //    svgHeight = triggerNode.ownerSVGElement.clientHeight;
-          
-          var left, top;
-          var horizontal, vertical;
-          
-          var e_left = bbox.left + bbox.width;
-          var w_left = bbox.left - width;
-          var c_left = bbox.left + (bbox.width - width)/2;
-          
-          if ((direction.indexOf("e") !== -1 &&
-                  e_left + width <= scene.left + scene.width) ||
-              (direction.indexOf("w") !== -1 && w_left < scene.left)) { // EAST
-            // If EAST and left of right edge
-            // or WEST and left of left edge (out of bounds)
-            // then EAST
-            
-            horizontal = "east";
-            left = e_left;
-          } else if ((direction.indexOf("w") !== -1 && w_left >= scene.left) ||
-                     (direction.indexOf("e") !== -1 &&
-                        e_left + width > scene.left + scene.width)) { // WEST
-            // If WEST and right of left edge
-            // or EAST and right of right edge (out of bounds)
-            // then WEST
-            
-            horizontal = "west";
-            left = w_left;
-          } else { // CENTER
-            if (c_left + width > scene.left + scene.width) { // too far right
-              horizontal = "west";
-              left = w_left;
-            } else if (c_left < scene.left) { // too far left
-              horizontal = "east";
-              left = e_left;
-            } else {
-              horizontal = "center";
-              left = c_left;
-            }
-          }
-          
-          var n_top = bbox.top - height;
-          var s_top = bbox.top + bbox.height;
-          var c_top = bbox.top + (bbox.height - height)/2;
-      
-          if ((direction.indexOf("n") !== -1 && n_top >= scene.top) ||
-              (direction.indexOf("s") !== -1 &&
-                  s_top + height > scene.top + scene.height)) {
-            // If NORTH and below top
-            // or SOUTH and below bottom (out of bounds)
-            // then: NORTH
-            
-            vertical = "north";
-            top = n_top;
-          } else if ((direction.indexOf("s") !== -1 &&
-                          s_top + heigth <= scene.top + scene.height) ||
-                     (direction.indexOf("n") !== -1 && n_top < scene.top)) {
-            // If SOUTH and above bottom
-            // or NORTH and above top (out of bounds)
-            // then: SOURTH
-            
-            vertical = "south";
-            top = s_top;
-          } else { // CENTER
-            if (c_top < scene.top) { // too far up
-              vertical = "south";
-              top = s_top;
-            } else if (c_top + height > scene.top + scene.height) {  // too far down
-              vertical = "north"
-              top = n_top;
-            } else {
-              vertical = "center";
-              top = c_top;
-            }
-          }
-          //console.log(scene);
-          console.log("Top:", top, "Left:", left);
-          console.log("Vertical: ", vertical, "Horizontal: ", horizontal);
-          tooltip.style("visibility", "visible")
-                        .style("left", left + "px")
-                        .style("top", top + "px")
-                        .classed(horizontal, true)
-                        .classed(vertical, true)
-                        .html("<div class='tooltip-body'></div>");
-          
-          var tooltipBody = tooltip.select('.tooltip-body');
-          tooltipBody.html(html);
-          
-        }*/
-        /*
-        top:
-          bottom 100%
-          left 50%
-          border-bottom-color
-          margin-left
         
-        right:
-          top: 50%
-          left: 100%
-          border-left-color
-          margin-top
+        map.addFeatureListener("mouseover", function(d, i) {
+          //that.parentNode.appendChild(that);
+          //console.log("EXT MOUSOVER", d3.selectAll(".tract-" + d.id));
+          d3.selectAll(".tract-" + d.id)
+            .classed("selected", true).each(function() {
+              this.parentNode.appendChild(this); });
+            
+          // Show scatter tooltip
+          scatter.svg().selectAll(".tract-" + d.id).each(function(d, i) {
+            scatterTooltip.show(this, [[{"var var-id": idSeries},
+                                        {"spacer": ": "},
+                                       {"value value-id": tractNumber(idValue(d))}],
+                                      [{"var var-x": xSeries},
+                                       {"spacer": ": "},
+                                       {"value value-x": xValue(d)}],
+                                      [{"var var-y": ySeries},
+                                       {"spacer": ": "},
+                                       {"value value-y": yValue(d)}]]);
+          });
           
-        bottom:
-          top 100%
-          left: 50%
-          border-top-color
-          margin-left
+          mapTooltip.show(this, [[{"var var-id": idSeries},
+                                  {"spacer": ": "},
+                                  {"value value-id": tractNumber(d.id) }],
+                                 [{"var var-map": mapSeries},
+                                  {"spacer": ": "},
+                                  {"value value-map": mapValue(d)}]]);
+        });
         
-        left:
-          top: 50%
-          right: 100%
-          border-right-color
-          margin-top
-        */
-        
+        map.addFeatureListener("mouseout", function(d, i) {
+          //console.log("MOUSOUT", d);
+          //if (typeof d.data !== "undefined")
+            d3.selectAll(".tract-" + d.id) //idValue(d.data))
+              .classed("selected", false);
+            scatterTooltip.hide();
+            mapTooltip.hide();
+            
+        });
         
         
         scatter.addMarkerListener("mouseover", function(d, i) {
@@ -471,25 +418,25 @@
           map.svg().selectAll(".tract-" + idValue(d))
             .each(function(d, i) {
               map.triggerFeatureListener("mouseover", d, i, this) });
-          d3.selectAll(".tract-" + idValue(d)).classed("selected", true);
-          scatterTooltip.show(this, [[idSeries, idValue(d)],
-                                      [xSeries, xValue(d)],
-                                      [ySeries, yValue(d)]]);
-          //scatterToolip.show(d);
-          //mapTooltip.show(d);
           
-          /*var html = "<ul class='tooltip-list'>" +
-                      "<li><span class='var var-id'>" + idSeries + ":</span>" + idValue(d) + "</li>" +
-                      "<li><span class='var var-x'>" + xSeries + ":</span> " + xValue(d) + "</li>" +
-                      "<li><span class='var var-y'>" + ySeries + ":</span> " + yValue(d) + "</li>" +
-                    "</ul>";
-          showTooltip(scatterTooltip, this, html, "w");*/
+          d3.selectAll(".tract-" + idValue(d)).classed("selected", true);
+          scatterTooltip.show(this, [[{"var var-id": idSeries},
+                                      {"spacer": ": "},
+                                      {"value value-id": tractNumber(idValue(d))}],
+                                     [{"var var-x": xSeries},
+                                      {"spacer": ": "},
+                                      {"value value-x": xValue(d)}],
+                                     [{"var var-y": ySeries},
+                                      {"spacer": ": "},
+                                      {"value value-y": yValue(d)}]]);
           
         });                
         scatter.addMarkerListener("mouseout", function(d, i) {
+          map.svg().selectAll(".tract-" + idValue(d))
+            .each(function(d, i) {
+              map.triggerFeatureListener("mouseout", d, i, this) });
           d3.selectAll(".tract-" + idValue(d)).classed("selected", false);
-          //scatterToolip.hide(d);
-          //mapTooltip.hide(d);
+          scatterTooltip.hide();
         });
         
         

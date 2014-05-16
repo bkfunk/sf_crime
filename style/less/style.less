@@ -1,83 +1,14 @@
+@import "plots";
+@import "tooltips";
 
-.tract {
-  stroke: navy;
-  stroke-width: 1;
-  fill: url("#diagonalHatch");
-}
-/*GREENS*/
-.plotted.q0-9{fill:rgb(247,252,245)}
-.plotted.q1-9{fill:rgb(229,245,224)}
-.plotted.q2-9{fill:rgb(199,233,192)}
-.plotted.q3-9{fill:rgb(161,217,155)}
-.plotted.q4-9{fill:rgb(116,196,118)}
-.plotted.q5-9{fill:rgb(65,171,93)}
-.plotted.q6-9{fill:rgb(35,139,69)}
-.plotted.q7-9{fill:rgb(0,109,44)}
-.plotted.q8-9{fill:rgb(0,68,27)}
-
-/*BLUES
-.tract.q0-9{fill:rgb(247,251,255)}
-.tract.q1-9{fill:rgb(222,235,247)}
-.tract.q2-9{fill:rgb(198,219,239)}
-.tract.q3-9{fill:rgb(158,202,225)}
-.tract.q4-9{fill:rgb(107,174,214)}
-.tract.q5-9{fill:rgb(66,146,198)}
-.tract.q6-9{fill:rgb(33,113,181)}
-.tract.q7-9{fill:rgb(8,81,156)}
-.tract.q8-9{fill:rgb(8,48,107)}*/
-/* Greys */
-.q0-9{fill:rgb(255,255,255)}
-.q1-9{fill:rgb(240,240,240)}
-.q2-9{fill:rgb(217,217,217)}
-.q3-9{fill:rgb(189,189,189)}
-.q4-9{fill:rgb(150,150,150)}
-.q5-9{fill:rgb(115,115,115)}
-.q6-9{fill:rgb(82,82,82)}
-.q7-9{fill:rgb(37,37,37)}
-.q8-9{fill:rgb(0,0,0)}
-
-/* Disabled tracts */
-.qNA { pointer-events: none; }
-
-#test-container {
-  float: left;
-}
 .hidden {
   display: none;
 }
-.hatchRect {
-  fill: #AAA;
-  stroke: none;
-}
-.hatchPath {
-  stroke: #666;
-}
 
-.legend .label,
-.legend .header-label {
-  font-family: sans-serif;
-  font-size: xx-small;
-  alignment-baseline: central;
-}
-.label-tick {
-  stroke: black;
-  stroke-dasharray: 3;
-}
-
-/*
-.tract.plotted {
-  stroke: #333;
-  stroke-width: 2;
-}*/
-.tract:hover,
-.tract.selected {
-  stroke: red;
-  stroke-width: 2;
-}
 #main {
   clear: both;
   float: left;
-  margin: auto;
+  margin: 0 auto;
 }
 #info {
   clear: both;
@@ -127,62 +58,21 @@
   
 }
 
-@import "tooltips";
 
-circle {
-  fill: blue;
-  fill-opacity: .4;
-  stroke: darkblue;
-  stroke-opacity: .6;
-  opacity: .3;
-}
-circle:hover,
-circle.selected {
-  fill-opacity: .5;
-  opacity: 1;
-  stroke: red;
-  stroke-width: 2;
-}
-.text {
-  clear: both;
-}
-svg {
-  float: left;
-  /*border: 1px dashed lightgray;*/
-}
-.axis path,
-.axis line {
-    fill: none;
-    stroke: black;
-    shape-rendering: crispEdges;
-}
 
-.axis text {
-    font-family: sans-serif;
-    font-size: 11px;
-}
-.line {
-  fill: none;
-  stroke: #999;
-  stroke-width: 1px;
-}
 
-.area {
-  fill: lightblue;
-  stroke-width: 0;
-  fill-opacity: .5;
-}
 
-#xden-highlight .line,
-#yden-highlight .line,
-.highlight-line {
-  stroke-width: 2px;
-  stroke: #333;
-  stroke-opacity: 1;
+#loading {
+    position: absolute;
+    left: 50%;
+    top: 50%;
 }
-
-.brush .extent {
-  stroke: steelblue;
-  fill-opacity: .125;
-  shape-rendering: crispEdges;
+#loading p {
+    text-align: center;
+    vertical-align: middle;
+    margin: 0;
+    height: 100px;
+    width: 100px;
+    margin-left: -50px;
+    margin-top: -50px;
 }

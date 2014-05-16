@@ -281,17 +281,17 @@ function densityPlot() {
       main.select(".x-axis")
           .classed("hidden", (showAxes.indexOf("x") === -1))
           .call(xAxis);
-      xAxisg.append("text")
+      /*xAxisg.append("text")
         .attr("x", width / 2)
         .attr("y", margin.bottom * .8)
         .style("text-anchor", "middle")
         .style("font-weight", "bold")
-        .text(axisLabelText);
-      main.select(".x-axis").selectAll(".tick").selectAll("text")
+        .text(axisLabelText);*/
+      /*main.select(".x-axis").selectAll(".tick").selectAll("text")
         .each(function(text, axis, i) {
           //console.log(arguments, this);
           //console.log(text, ":", this.offsetWidth);
-        });
+        });*/
     }
     
     // Update y-axis
@@ -407,10 +407,10 @@ function densityPlot() {
     if (typeof update === "undefined" || update) plot.updatePlot();
     return plot;
   };
-  
+  /*
   plot.plotContainer = function(_) {
     if (!arguments.length) return plotContainer;
-  };
+  };*/
   
   plot.showAxes = function(_) {
     if (!arguments.length) return showAxes;

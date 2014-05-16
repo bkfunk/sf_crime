@@ -23,6 +23,8 @@ function scatterPlot() {
       xAxis = d3.svg.axis().orient("bottom"),
       yAxis = d3.svg.axis().orient("left"),
       xAxisg, yAxisg,
+      xAxisLabel, yAxisLabel,
+      xAxisLabelText, yAxisLabelText,
       showAxes = "xy",
       markerListeners = {
         "mouseover": function(d, i) {
@@ -58,6 +60,8 @@ function scatterPlot() {
     // Create Axes groups
     xAxisg = main.append("g").attr("class", "axis x-axis");
     yAxisg = main.append("g").attr("class", "axis y-axis");
+    xAxisLabel = xAxisg.append("text").attr("class", "axis-label x-axis-label");
+    yAxisLabel = yAxisg.append("text").attr("class", "axis-label y-axis-label");
     
     markerClipPath = main.append("clipPath")
                         .attr("class", "clip-path")
@@ -185,6 +189,11 @@ function scatterPlot() {
       xScale.domain(domain.x);
       if (showAxes.indexOf("x") !== -1)
           main.select(".x-axis").call(xAxis);
+          xAxisLabel.attr("x", width / 2)
+                    .attr("y", margin.bottom * .8)
+                    .style("text-anchor", "middle")
+                    //.style("font-weight", "bold")
+                    .text(xAxisLabelText);
     }
     
     // Update y-axis
@@ -192,6 +201,12 @@ function scatterPlot() {
       yScale.domain(domain.y);
       if (showAxes.indexOf("y") !== -1)
           main.select(".y-axis").call(yAxis);
+          yAxisLabel.attr("transform", "rotate(-90)")
+                    .attr("dy", -margin.left * .8)
+                    .attr("x", -height / 2)
+                    .style("text-anchor", "middle")
+                    //.style("font-weight", "bold")
+                    .text(yAxisLabelText);
     }
     
     return plot;
@@ -266,5 +281,28 @@ function scatterPlot() {
     idValue = _;
     return plot;
   };
+  
+  plot.xAxisLabelText = function(_) {
+    if (!arguments.length) return xAxisLabelText;
+    xAxisLabelText = _;
+    return plot;
+  };
+  plot.yAxisLabelText = function(_) {
+    if (!arguments.length) return yAxisLabelText;
+    yAxisLabelText = _;
+    return plot;
+  };
+  
+  plot.margin = function(_) {
+    console.log(margin);
+    if (!arguments.length) return margin;
+    for (key in _) {
+      console.log(key);
+      margin[key] = _[key];
+    }
+    console.log(margin);
+    return plot;
+  };
+  
   return plot;
 }

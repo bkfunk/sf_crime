@@ -1,9 +1,7 @@
 /* CSS crunched with Crunch - http://crunchapp.net/ */
-.tract {
-  stroke: navy;
-  stroke-width: 1;
-  fill: url("#diagonalHatch");
-}
+/******************
+ *       MAP      *
+ ******************/
 /*GREENS*/
 .plotted.q0-9 {
   fill: #f7fcf5;
@@ -74,11 +72,12 @@
 .qNA {
   pointer-events: none;
 }
-#test-container {
-  float: left;
-}
-.hidden {
-  display: none;
+/* TRACTS */
+/* Default tract */
+.tract {
+  stroke: navy;
+  stroke-width: 1;
+  fill: url("#diagonalHatch");
 }
 .hatchRect {
   fill: #AAA;
@@ -87,6 +86,7 @@
 .hatchPath {
   stroke: #666;
 }
+/* LEGEND */
 .legend .label,
 .legend .header-label {
   font-family: sans-serif;
@@ -104,57 +104,64 @@
 }*/
 .tract:hover,
 .tract.selected {
-  stroke: red;
+  stroke: #ff0000;
   stroke-width: 2;
 }
-#main {
+/******************
+ *    SCATTER     *
+ ******************/
+circle {
+  fill: blue;
+  fill-opacity: .4;
+  stroke: darkblue;
+  stroke-opacity: .6;
+  opacity: .3;
+}
+circle:hover,
+circle.selected {
+  fill-opacity: .5;
+  opacity: 1;
+  stroke: #ff0000;
+  stroke-width: 2;
+}
+.text {
   clear: both;
+}
+svg {
   float: left;
-  margin: auto;
+  /*border: 1px dashed lightgray;*/
 }
-#info {
-  clear: both;
-  margin: auto;
-  text-align: center;
-  height: 1.2em;
+.axis path,
+.axis line {
+  fill: none;
+  stroke: black;
+  shape-rendering: crispEdges;
 }
-#scatter-group-container {
-  float: left;
-  /*width: 650px;
-  height: 650px;*/
-  /*border: 1px solid blue;*/
+.axis text {
+  font-family: sans-serif;
+  font-size: 11px;
 }
-#map-container {
-  float: left;
-  /*width: 600px;
-  height: 600px;*/
-  /*border: 1px solid gray;*/
+.line {
+  fill: none;
+  stroke: #999;
+  stroke-width: 1px;
 }
-#y-density-container {
-  float: left;
-  clear: right;
+.area {
+  fill: lightblue;
+  stroke-width: 0;
+  fill-opacity: .5;
 }
-#scatter-container {
-  float: left;
-  clear: left;
+#xden-highlight .line,
+#yden-highlight .line,
+.highlight-line {
+  stroke-width: 2px;
+  stroke: #333;
+  stroke-opacity: 1;
 }
-#corner-container {
-  clear: right;
-  float: left;
-}
-#x-density-container {
-  float: left;
-  clear: left;
-}
-#y-density-slider {
-  float: left;
-}
-#explanation {
-  clear: both;
-  width: 50%;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 30px 0 30px 0;
+.brush .extent {
+  stroke: steelblue;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
 }
 /* Tooltips */
 .tooltip {
@@ -323,56 +330,69 @@
   -moz-border-radius: 0.5em !important;
   border-radius: 0.5em !important;
 }
-circle {
-  fill: blue;
-  fill-opacity: .4;
-  stroke: darkblue;
-  stroke-opacity: .6;
-  opacity: .3;
+.hidden {
+  display: none;
 }
-circle:hover,
-circle.selected {
-  fill-opacity: .5;
-  opacity: 1;
-  stroke: red;
-  stroke-width: 2;
-}
-.text {
+#main {
   clear: both;
-}
-svg {
   float: left;
-  /*border: 1px dashed lightgray;*/
+  margin: auto;
 }
-.axis path,
-.axis line {
-  fill: none;
-  stroke: black;
-  shape-rendering: crispEdges;
+#info {
+  clear: both;
+  margin: auto;
+  text-align: center;
+  height: 1.2em;
 }
-.axis text {
-  font-family: sans-serif;
-  font-size: 11px;
+#scatter-group-container {
+  float: left;
+  /*width: 650px;
+  height: 650px;*/
+  /*border: 1px solid blue;*/
 }
-.line {
-  fill: none;
-  stroke: #999;
-  stroke-width: 1px;
+#map-container {
+  float: left;
+  /*width: 600px;
+  height: 600px;*/
+  /*border: 1px solid gray;*/
 }
-.area {
-  fill: lightblue;
-  stroke-width: 0;
-  fill-opacity: .5;
+#y-density-container {
+  float: left;
+  clear: right;
 }
-#xden-highlight .line,
-#yden-highlight .line,
-.highlight-line {
-  stroke-width: 2px;
-  stroke: #333;
-  stroke-opacity: 1;
+#scatter-container {
+  float: left;
+  clear: left;
 }
-.brush .extent {
-  stroke: steelblue;
-  fill-opacity: .125;
-  shape-rendering: crispEdges;
+#corner-container {
+  clear: right;
+  float: left;
+}
+#x-density-container {
+  float: left;
+  clear: left;
+}
+#y-density-slider {
+  float: left;
+}
+#explanation {
+  clear: both;
+  width: 50%;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 30px 0 30px 0;
+}
+#loading {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+}
+#loading p {
+  text-align: center;
+  vertical-align: middle;
+  margin: 0;
+  height: 100px;
+  width: 100px;
+  margin-left: -50px;
+  margin-top: -50px;
 }

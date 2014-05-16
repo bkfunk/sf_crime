@@ -1,0 +1,149 @@
+
+@font: sans-serif;
+@highlight-stroke-color: red;
+
+
+/******************
+ *       MAP      *
+ ******************/
+
+/*GREENS*/
+.plotted.q0-9{fill:rgb(247,252,245)}
+.plotted.q1-9{fill:rgb(229,245,224)}
+.plotted.q2-9{fill:rgb(199,233,192)}
+.plotted.q3-9{fill:rgb(161,217,155)}
+.plotted.q4-9{fill:rgb(116,196,118)}
+.plotted.q5-9{fill:rgb(65,171,93)}
+.plotted.q6-9{fill:rgb(35,139,69)}
+.plotted.q7-9{fill:rgb(0,109,44)}
+.plotted.q8-9{fill:rgb(0,68,27)}
+
+/*BLUES
+.tract.q0-9{fill:rgb(247,251,255)}
+.tract.q1-9{fill:rgb(222,235,247)}
+.tract.q2-9{fill:rgb(198,219,239)}
+.tract.q3-9{fill:rgb(158,202,225)}
+.tract.q4-9{fill:rgb(107,174,214)}
+.tract.q5-9{fill:rgb(66,146,198)}
+.tract.q6-9{fill:rgb(33,113,181)}
+.tract.q7-9{fill:rgb(8,81,156)}
+.tract.q8-9{fill:rgb(8,48,107)}*/
+
+/* Greys */
+.q0-9{fill:rgb(255,255,255)}
+.q1-9{fill:rgb(240,240,240)}
+.q2-9{fill:rgb(217,217,217)}
+.q3-9{fill:rgb(189,189,189)}
+.q4-9{fill:rgb(150,150,150)}
+.q5-9{fill:rgb(115,115,115)}
+.q6-9{fill:rgb(82,82,82)}
+.q7-9{fill:rgb(37,37,37)}
+.q8-9{fill:rgb(0,0,0)}
+
+/* Disabled tracts */
+.qNA { pointer-events: none; }
+
+/* TRACTS */
+/* Default tract */
+.tract {
+  stroke: navy;
+  stroke-width: 1;
+  fill: url("#diagonalHatch"); // will be overwritten when there is data available
+}
+
+.hatchRect { // Hatch pattern background
+  fill: #AAA;
+  stroke: none;
+}
+.hatchPath { // Hatch pattern foreground
+  stroke: #666;
+}
+
+/* LEGEND */
+.legend .label,
+.legend .header-label {
+  font-family: @font; //sans-serif;
+  font-size: xx-small;
+  alignment-baseline: central;
+}
+.label-tick { // line between boxes of legend
+  stroke: black;
+  stroke-dasharray: 3;
+}
+
+/*
+.tract.plotted {
+  stroke: #333;
+  stroke-width: 2;
+}*/
+.tract:hover,
+.tract.selected {
+  stroke: @highlight-stroke-color;
+  stroke-width: 2;
+}
+
+
+
+/******************
+ *    SCATTER     *
+ ******************/
+
+circle {
+  fill: blue;
+  fill-opacity: .4;
+  stroke: darkblue;
+  stroke-opacity: .6;
+  opacity: .3;
+}
+circle:hover,
+circle.selected {
+  fill-opacity: .5;
+  opacity: 1;
+  stroke: @highlight-stroke-color;
+  stroke-width: 2;
+}
+
+/*
+.text {
+  clear: both;
+}
+svg {
+  float: left;
+}*/
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    font-family: sans-serif;
+    font-size: 11px;
+}
+.line {
+  fill: none;
+  stroke: #999;
+  stroke-width: 1px;
+}
+
+.area {
+  fill: lightblue;
+  stroke-width: 0;
+  fill-opacity: .5;
+}
+
+#xden-highlight .line,
+#yden-highlight .line,
+.highlight-line {
+  stroke-width: 2px;
+  stroke: #333;
+  stroke-opacity: 1;
+}
+
+.brush .extent {
+  stroke: steelblue;
+  fill-opacity: .125;
+  shape-rendering: crispEdges;
+}

@@ -31,7 +31,7 @@
     
     <style type="text/css">
       /* Hide unstyled content */
-      .js #main { display: none; }      
+      .js #content { display: none; }      
     </style>
     
     <script type="text/javascript">
@@ -164,48 +164,43 @@
   </head>
   <body>
     <div id="loading"><p>Loading...</p></div>
-    <div id="main">
+    <div id="content">
       <header>
         <h1>SF Tract<em>ion</em></h1>
       </header>
-      <!--<div id="info"></div>-->
-      <div id="scatter-group-container">
-        
-        <div id="scatter-container" class="scatter plot-container">
-        </div>
-        
-        <div id="y-density-container" class="y density plot-container">
-        </div>
-        
-        <div id="x-density-container" class="x density plot-container">
-        </div>
-        
-        <div id="corner-container">
-        </div>
-      </div>
-      <div id="map-container">
-      </div>
-      <div id="figure-footer">
-        <div id="mode">
-          <input type='radio' name="mode" value="incidents" id="incidents"><label for="incidents">Incidents</label>
-          <input type='radio' name="mode" value="resolved" id="resolved"><label for="resolved">Resolved</label>
-          <input type='radio' name="mode" value="arrests" id="arrests"><label for="arrests">Arrests</label>
-        </div>
-        <div id="selects">
-          <label for="x-select">X Variable:</label>
-          <select id="x-select"></select>
+      <div id="main">
+        <div id="figure">
+          <div id="scatter-group-container">
+            <div id="scatter-container" class="scatter plot-container"></div>
+            <div id="y-density-container" class="y density plot-container"></div>
+            <div id="x-density-container" class="x density plot-container"></div>
+            <div id="corner-container"></div>
+          </div>
           
-          <label for="y-select">Y Variable:</label>
-          <select id="y-select"></select>
-          
-          <label for="map-select">Map Variable:</label>
-          <select id="map-select"></select>
+          <div id="map-container"></div>
         </div>
-      </div>
-      <div id="explanation">
-        <p>I built this as a way to explore how to visualize several dimensions of data while also geographic patterns.</p>
-        <p>You can use the handles on the density plots of the X and Y variable to restrict the scatter plot to a certain range. Doing so will also highlight the plotted points on the map by setting all tracts that are not on the scatter plot to grayscale. Use the select elements at the top to change variables; note that you can have the map showing one of the two variables on the scatter plot, or you could set it to a completely different variable.</p>
-        <p>This is still a work in progress, in particular in terms of design/prettifying!</p>
+        <div id="figure-footer">
+          <div id="mode">
+            <input type='radio' name="mode" value="incidents" id="incidents"><label for="incidents">Incidents</label>
+            <input type='radio' name="mode" value="resolved" id="resolved"><label for="resolved">Resolved</label>
+            <input type='radio' name="mode" value="arrests" id="arrests"><label for="arrests">Arrests</label>
+          </div>
+          <div id="selects">
+            <label for="x-select">X Variable:</label>
+            <select id="x-select"></select>
+            
+            <label for="y-select">Y Variable:</label>
+            <select id="y-select"></select>
+            
+            <label for="map-select">Map Variable:</label>
+            <select id="map-select"></select>
+          </div>
+        </div>
+        <div id="explanation">
+          <p>I built this as a way to explore how to visualize several dimensions of data while also geographic patterns.</p>
+          <p>You can use the handles on the density plots of the X and Y variable to restrict the scatter plot to a certain range. Doing so will also highlight the plotted points on the map by setting all tracts that are not on the scatter plot to grayscale. Use the select elements at the top to change variables; note that you can have the map showing one of the two variables on the scatter plot, or you could set it to a completely different variable.</p>
+          <p>This is still a work in progress, in particular in terms of design/prettifying!</p>
+        </div>
       </div>
     </div>
     
@@ -359,7 +354,7 @@
         
         
     // Map Plot
-        map = multiMap();
+        map = multiMap().plotWidth(600).plotHeight(500);
         
         d3.select("#map-container")
           .datum(tractData)
@@ -385,7 +380,7 @@
           .idValue(function(d, i) { return "0" + d[idSeries]; })
           .xAxisLabelText(labels[xSeries])
           .yAxisLabelText(labels[ySeries])
-          .margin({left: 60});
+          .margin({top: 20, right: 10, bottom: 50, left: 60});
         
         d3.select("#scatter-container")
             .datum(data)
@@ -394,7 +389,48 @@
         var scatterTooltip = Tooltip();
         d3.select("#scatter-container")
           .call(scatterTooltip);
+    
+    
+    // X-density Plot
+        xden = densityPlot().plotWidth(400).plotHeight(100)
+          .getValue(xValue)
+          .margin({top: 0, right: 10, bottom: 50, left: 60});
+          
+        d3.select("#x-density-container")
+          .datum(data)
+          .call(xden);
+          
+        xden.brushMoveListener(function(brush) {
+          scatter.updateAxes("x", brush.extent());
+          scatter.updateMarkerPositions(false);
+        });
+        xden.brushEndListener(function(brush) {
+          scatter.updateAxes("x", brush.extent());
+          scatter.updateMarkerPositions(true);
+        });
         
+    // Y-density Plot
+        yden = densityPlot().plotWidth(100).plotHeight(400)
+          .getValue(function(d) {
+            return +d[ySeries];
+          })
+          .showAxes("y")
+          .flipAxis(true)
+          .orientation("vertical")
+          .margin({top: 0, right: 20, bottom:50, left: 50});
+          
+        d3.select("#y-density-container")
+          .datum(data)
+          .call(yden);
+          
+        yden.brushMoveListener(function(brush) {
+          scatter.updateAxes("y", brush.extent());
+          scatter.updateMarkerPositions(false);
+        });
+        yden.brushEndListener(function(brush) {
+          scatter.updateAxes("y", brush.extent());
+          scatter.updateMarkerPositions(true);
+        });
         
     // Map/Scatter Listeners
         map.addFeatureListener("mouseover", function(d, i) {
@@ -464,44 +500,7 @@
         
         
         
-    // X-density Plot
-        xden = densityPlot().plotWidth(400).plotHeight(100)
-          .getValue(xValue);
-          
-        d3.select("#x-density-container")
-          .datum(data)
-          .call(xden);
-          
-        xden.brushMoveListener(function(brush) {
-          scatter.updateAxes("x", brush.extent());
-          scatter.updateMarkerPositions(false);
-        });
-        xden.brushEndListener(function(brush) {
-          scatter.updateAxes("x", brush.extent());
-          scatter.updateMarkerPositions(true);
-        });
-        
-    // Y-density Plot
-        yden = densityPlot().plotWidth(100).plotHeight(400)
-          .getValue(function(d) {
-            return +d[ySeries];
-          })
-          .showAxes("y")
-          .flipAxis(true)
-          .orientation("vertical");
-          
-        d3.select("#y-density-container")
-          .datum(data)
-          .call(yden);
-          
-        yden.brushMoveListener(function(brush) {
-          scatter.updateAxes("y", brush.extent());
-          scatter.updateMarkerPositions(false);
-        });
-        yden.brushEndListener(function(brush) {
-          scatter.updateAxes("y", brush.extent());
-          scatter.updateMarkerPositions(true);
-        });
+    
         
     
         
@@ -551,7 +550,7 @@
         .defer(d3.csv, "data/rates/inc_2012.csv")
         .awaitAll(function(error, results) {
           $("#loading").css("display", "none");
-          $("#main").css("display", "block");
+          $("#content").css("display", "block");
           mapdata = results[0];
           dataset = results[1];
           tracts = topojson.feature(mapdata, mapdata.objects.sf_tracts);

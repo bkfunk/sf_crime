@@ -16,6 +16,8 @@ function multiMap() {
       dataIn,
       tracts,
       featureListeners = { },
+      baseZoom = 310,
+      zoom = 1.0,
       mapCreated = false;
       
   var nColors = 9;
@@ -105,7 +107,7 @@ function multiMap() {
     var mapHeight = height;
     
     projection.translate([mapWidth/2, mapHeight/2])
-                        .scale(310 * mapWidth);
+                        .scale(zoom * baseZoom * mapWidth);
     quantScale.range(d3.range(nColors));
     quantScale.domain(d3.extent(features.map(value)));
     
@@ -321,5 +323,43 @@ function multiMap() {
     return map;
   };
   
+  map.margin = function(_) {
+    if (!arguments.length) return margin;
+    for (key in _) {
+      margin[key] = _[key];
+    }
+    return map;
+  };
+  map.plotWidth = function(_, update) {
+    if (!arguments.length) return plotWidth;
+    plotWidth = _;
+    if (mapCreated) {
+      if (typeof update === "undefined" || update)
+        map.updateMap();
+      else svg.attr("width", plotWidth);
+    }
+    return map;
+  };
+  map.plotHeight = function(_, update) {
+    if (!arguments.length) return plotHeight;
+    plotHeight = _;
+    if (mapCreated) {
+      if (typeof update === "undefined" || update)
+        map.updateMap();
+      else svg.attr("height", plotHeight);
+    }
+    return map;
+  };
+  
+  
+  map.zoom = function(_) {
+    if (!arguments.length) return zoom;
+    zoom = _;
+    if (mapCreated) {
+      projection.scale(zoom * baseZoom * width);
+      svg.selectAll("path").transition().attr("d", path);
+    }
+    return map;
+  };
   return map;
 }

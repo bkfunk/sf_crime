@@ -124,13 +124,13 @@ circle.selected {
   stroke: #ff0000;
   stroke-width: 2;
 }
+/*
 .text {
   clear: both;
 }
 svg {
   float: left;
-  /*border: 1px dashed lightgray;*/
-}
+}*/
 .axis path,
 .axis line {
   fill: none;
@@ -334,33 +334,23 @@ svg {
   display: none;
 }
 #main {
-  clear: both;
-  float: left;
-  margin: auto;
+  margin: 0 auto;
 }
-#info {
+#figure {
   clear: both;
-  margin: auto;
-  text-align: center;
-  height: 1.2em;
 }
 #scatter-group-container {
   float: left;
-  /*width: 650px;
-  height: 650px;*/
-  /*border: 1px solid blue;*/
 }
-#map-container {
+#scatter-container {
   float: left;
-  /*width: 600px;
-  height: 600px;*/
-  /*border: 1px solid gray;*/
+  clear: left;
 }
 #y-density-container {
   float: left;
   clear: right;
 }
-#scatter-container {
+#x-density-container {
   float: left;
   clear: left;
 }
@@ -368,18 +358,16 @@ svg {
   clear: right;
   float: left;
 }
-#x-density-container {
+#map-container {
   float: left;
-  clear: left;
 }
-#y-density-slider {
-  float: left;
+#figure-footer {
+  clear: both;
 }
 #explanation {
   clear: both;
-  width: 50%;
-  margin-left: auto;
-  margin-right: auto;
+  width: 70%;
+  margin: 0 auto;
   padding: 30px 0 30px 0;
 }
 #loading {

@@ -2,6 +2,10 @@
 @ui-font: 'Noto Sans', sans-serif;
 @logo-font: 'Noto Sans', sans-serif;
 
+@ui-button-color: #999;
+@ui-button-border-color: #666;
+@ui-button-active-color: blue;
+
 @import "plots";
 @import "tooltips";
 @import "widgets";
@@ -12,6 +16,7 @@
 }
 
 body {
+    font-family: @ui-font;
     margin: 0;
     padding: 0;
 }
@@ -52,22 +57,20 @@ header {
   float: left;
 }
 
-#figure-footer {
+#figure-footers {
     clear: both;
 }
 
 .figure-footer {
     float: left;
-    width: 46%;
-    margin-left: 2%;
-    margin-right: 2%;
+    width: 50%;
+    //margin-left: 2%;
+    //margin-right: 2%;
 }
 label {
     font-family: @ui-font;
 }
-.select-varname, .select-varlabel {
-    font-size: .8em;
-}
+
 
 #explanation {
   clear: both;

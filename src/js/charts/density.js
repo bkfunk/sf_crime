@@ -22,6 +22,7 @@ function densityPlot() {
       value = function(d) { return d.value; },
       densityValue = function(d) { return d.densityValue; },
       idValue = function(d) { return d['id'] };
+      //series = "incidents";
   
   // Scales/Axes    
   var xScale = d3.scale.linear(),

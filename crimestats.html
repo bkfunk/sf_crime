@@ -7,7 +7,8 @@
     <title>SF Traction</title>
       
     <!--<script type="text/javascript" src="lib/underscore/underscore-min.js"></script>-->
-    <script type="text/javascript" src="lib/d3/d3.min.js"></script>
+    <!--script type="text/javascript" src="lib/d3/d3.min.js"></script-->
+    <script type="text/javascript" src="lib/d3/d3.js"></script>
     <script type="text/javascript" src="lib/d3/lib/science/science.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/science/science.stats.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/colorbrewer/colorbrewer.js"></script>
@@ -169,7 +170,7 @@
     <div id="content">
       <header>
         <h1>SF Tract<em>ion</em></h1>
-          <div id="mode">
+          <div id="mode-toggle">
               <input type='radio' name="mode" value="incidents" id="incidents"><label for="incidents">Incidents</label>
               <input type='radio' name="mode" value="resolved" id="resolved"><label for="resolved">Resolved</label>
               <input type='radio' name="mode" value="arrests" id="arrests"><label for="arrests">Arrests</label>
@@ -205,7 +206,15 @@
             <div class="select-container map-select-container">
               <label for="map-select">Map Variable:</label>
               <select id="map-select"></select>
-            </div> 
+            </div>
+            <div class="button-container map-button-container">
+              <label class="overlay-toggle-label">Neighborhood Overlay:</label>
+              <div id="overlay-toggle">
+                <input type="radio" name="overlay" value="on" id="overlayOn"><label for="overlayOn">On</label>
+                <input type="radio" name="overlay" value="off" id="overlayOff"><label for="overlayOff">Off</label>
+              </div>
+              <button id="resetMapButton" onclick="resetMap()">Reset Map</button>
+            </div>
           </div>
           
         </div>
@@ -225,24 +234,24 @@
       var labels = {
           "hh_size": "Avg. # of people per household",
           "hh_pop": "Population",
-          "foreign_pct": "Pct. foreign born",
+          "foreign_pct": "Pct. foreign born (whole population)",
           "hh": "Number of Households",
-          "badenglish_pct": 'Pct. pop. who speak English less than "very well"',
-          "same_house_pct": "Pct. Lived in Same House 1 Yr. Ago",
-          "ba_grad_pct": "Pct. of pop. 25+ y.o. w/ BA or higher",
+          "badenglish_pct": 'Pct. who speak English less than "very well" (whole population)',
+          "same_house_pct": "Pct. Lived in Same House 1 Yr. Ago (whole population)",
+          "ba_grad_pct": "Pct. w/ BA or higher (population aged 25+)",
           "disab_pct": "Pct. disabled",
           "hs_grad_pct": "Pct. of pop 25+ y.o. w/ HS degree/GED or higher",
           "noncitizen_pct": "Pct. Noncitizen",
           "nonenglish_pct": "Pct. who don't speak English at home",
           "hh_old_pct": "Pct. of Households w/ Resident Aged 65+",
           "hh_youth_pct": "Pct. of Households w/ Resident Aged <18",
-          "fertility": "Pct. of Women Aged 15-50 who gave birth in last 12 mo.",
-          "school_pct": "Pct. of pop. 3+ y.o. in school",
+          "fertility": "Pct. who gave birth in last 12 mo. (Women Aged 15-50)",
+          "school_pct": "Pct. in school (population aged 3+)",
           "med_hh_inc": "Median household income",
           "mean_hh_inc": "Mean household income",
-          "health_ins_pct": "Pct. of civilian, noninstitutional pop. w/ health insurance",
-          "unemp_pct": "Pct. of pop. 16+ y.o. unemployed",
-          "poverty_pct": "Pct. of families below poverty line",
+          "health_ins_pct": "Pct. w/ health insurance (civilian, noninstitutional population)",
+          "unemp_pct": "Pct. unemployed (population aged 16+)",
+          "poverty_pct": "Pct. below poverty line (families)",
           "no_car_pct": "Pct. of households w/ no vehicle available",
           "unaff_mortgage_pct": "unaff_mortgage_pct",
           "crowded_pct": "crowded_pct",
@@ -438,26 +447,101 @@
       
       function loadVis() {
         $("header").css("display", "block");
+        
+        
         $("#incidents").attr("checked", true);
-        $( "#mode" ).buttonset();
+        $( "#mode-toggle" ).buttonset();
+        $("#mode-toggle").change(function() {
+          console.log("changed", $(this).children(":checked").val()); });
+        
+        
+        $("#overlayOn").attr("checked", true);
+        $( "#overlay-toggle" ).buttonset();
+        $("#overlay-toggle").change(function() {
+          var selected = $("#overlay-toggle :checked").val();
+          d3.select(".nMain").classed("hidden", selected==$("#overlayOff").val());
+        });
+        //$("#resetMapButton").button();
         //});
         
         //incidents = d3.csv("data/rates/inc_2012.csv", null, )
         
+        var loadTracts = function(callback) {
+          d3.json("geo/sf_tracts_topo.json", callback);
+        }
+        
+        var loadNeighborhoods = function(callback) {
+          d3.json("geo/sf_neighborhoods_topo.json", callback);
+        };
+        
+        var loadMapData = function(callback) {
+          queue()
+            .defer(d3.json, "geo/sf_tracts_topo.json")
+            .defer(d3.json, "geo/sf_neighborhoods_topo.json")
+            .await(function(error, tResults, nResults) {
+              mapdata = tResults;
+              neighborhoods = topojson.feature(nResults, nResults.objects.sf_neighborhoods);
+              tracts = topojson.feature(mapdata, mapdata.objects.sf_tracts);
+              
+              callback(error, {
+                tracts: tracts,
+                neighborhoods: neighborhoods
+              });
+            });
+        };
+        var loadData = function(callback) {
+          queue()
+            .defer(d3.csv, "data/rates/inc_2012.csv")
+            .defer(d3.csv, "data/rates/res_2012.csv")
+            .defer(d3.csv, "data/rates/arr_2012.csv")
+            .await(function(error, inc, res, arr) {
+              datasets = {
+                incidents: inc,
+                resolved: res,
+                arrests: arr
+              };
+              callback(error, datasets);
+            });
+        };
+        
+        
+        
+        console.log("loading files", loadTracts);
+        q = queue()
+          .defer(loadMapData)
+          .defer(loadData)
+          .awaitAll(function(error, results) {
+            console.log("Got results");
+            console.log(results);
+            $("#loading").css("display", "none");
+            $("#main").css("display", "block");
+            //datasets = results[1]
+            generateVis();
+          });
+        /*
+        
         queue()
-          .defer(d3.json, "geo/sf_tracts_topo.json")
+          .defer(queue()
+            .defer(d3.json, "geo/sf_tracts_topo.json")
+            .defer(d3.json, "geo/sf_neighborhoods_topo.json")
+            .await,
+            (function(error, tResults, nResults) {
+              console.log(tResults, nResults);
+              mapdata = tResults;
+              neighborhoods = topojson.feature(nResults, nResults.objects.sf_neighborhoods);
+              tracts = topojson.feature(mapdata, mapdata.objects.sf_tracts);
+            
+            }))
           //.defer(d3.json, "geo/gz_2010_06_140_00_500k/sf_tracts_full_topo.json")
           .defer(d3.csv, "data/rates/inc_2012.csv")
-          .defer(d3.json, "geo/sf_neighborhoods_topo.json")
           .awaitAll(function(error, results) {
+            console.log(results);
             $("#loading").css("display", "none");
             $("#main").css("display", "block");
             mapdata = results[0];
             dataset = results[1];
-            neighborhoods = topojson.feature(results[2], results[2].objects.sf_neighborhoods);
-            tracts = topojson.feature(mapdata, mapdata.objects.sf_tracts);
             generateVis();
-          });
+          });*/
       }
       
       
@@ -477,6 +561,7 @@
           tractData.index[i] = id;
           //tractData[id]["border"] = b;
           tractData[id]["id"] = id;
+          //tractData[id]["data"] = { };
         }
         
         for (i in neighborhoods.features) {
@@ -484,18 +569,33 @@
           n["label"] = neighborhoodLabels[n.id];
         }
         
-        for (i in dataset) { // for each element in the dataset (from CSV)
-          var t = dataset[i];
-          var id = "0" + t.tract_id; // CSV ID doesn't have initial zero
-          if (tractData.hasOwnProperty(id)) {
-            tractData[id]["data"] = t; // add data to corresponding tract geom.
+        //for (d in datasets) {
+          for (i in datasets["incidents"]) { // for each element in the dataset (from CSV)
+            var t = datasets["incidents"][i];
+            var id = "0" + t.tract_id; // CSV ID doesn't have initial zero
+            if (tractData.hasOwnProperty(id)) {
+              //tractData[id]["data"][d] = t; // add data to corresponding tract geom.
+              tractData[id]["data"] = t; // add data to corresponding tract geom.
+            }
           }
-        }
+        //}
+        /*
+        for (t in tractData.index) {
+          console.log("T: ", t);
+          console.log(tractData.index[t]);
+          console.log(tractData[tractData.index[t]]);
+          console.log(tractData[tractData.index[t]]["data"]);
+          console.log(tractData[tractData.index[t]]["data"]["incidents"]);
+          
+        }*/
+        
         
         //for (n in neighborhoods.features) {
         //  document.write('"' + neighborhoods.features[n].id + '": "' + neighborhoods.features[n].id + '",<br>');
         //}
-        
+        //for (i in tractData["06075980300"].data) {
+        //  tractData["06075980300"].data[i] = undefined;
+        //}
         tractData["06075980300"].data = undefined; // Golden Gate Park! Numbers are all weird, so we exclude it.
         
         data = tractData.index.map(function (t) { // get the data attribute
@@ -509,7 +609,10 @@
         
         // These functions can be used to dynamically get the right field
         // from the data.
-        var xValue = function(d, i) { return +d[xSeries]; };
+        var dataSeries = function() {
+          return $("mode-toggle :checked").val() || "incidents";
+        }
+        var xValue = function(d, i) { /*console.log(d, i, dataSeries());*/ return +d[xSeries]; };
         var yValue = function(d, i) { return +d[ySeries]; };
         var idValue = function(d, i) { return "0" + d[idSeries]; };
         var mapField = function(d, i) { return mapSeries; };
@@ -546,10 +649,14 @@
             .attr("title", function(d) { return labels[d] || d; })
             .attr("data-text", function(d) {
               var varname = d;
-              var label = labels[d] || d;
+              var longLabel = labels[d] || d;
+              // The short label is the long label to the left of first paren.
+              //var shortLabel = longLabel.split("(")[0];
+              // If shortLabel is not whole label, add ellipsis
+              //if (longLabel.length > shortLabel.length) shortLabel += "&hellip;";
               return "<span class='select-varname'>" + varname +
                         ": </span><span class='select-varlabel'>" +
-                        label + "</span>";
+                        longLabel + "</span>";
             })
             .text(function(d) { return d + ": " + labels[d] || d; });
             
@@ -720,13 +827,24 @@
         
         // Variable selectors
         $("#x-select").on("change", function( event ) {
-          //console.log(event.target.value);
           xSeries = event.target.value;
-          scatter.updateData().updatePlot();
+          scatter.xAxisLabelText(labels[xSeries]).updateData().updatePlot();
           xden.getValue(xValue) // change getValue function
               .updateData().updatePlot(); // update plot
         });
-        d3.selectAll("select")
+        $("#y-select").on("change", function( event ) {
+          ySeries = event.target.value;
+          scatter.yAxisLabelText(labels[ySeries]).updateData().updatePlot();
+          yden.getValue(yValue) // change getValue function
+              .updateData().updatePlot(); // update plot
+        });
+        $("#map-select").on("change", function( event ) {
+          mapSeries = event.target.value;
+          map.field(mapField);
+          map.updateMap();
+          //scatter.updateMarkerPositions();
+        });
+        /*d3.selectAll("select")
           .on("change", function(a, d, i) {
               if (d3.event.target.id === "x-select") {
                 xSeries = d3.event.target.value;
@@ -741,15 +859,18 @@
               if (d3.event.target.id === "map-select") {
                 mapSeries = d3.event.target.value;
                 map.field(mapField);
-                map.updateData().updateMap();
+                map.updateMap();
                 scatter.updateMarkerPositions();
               }
-          })
-          $("select").selectBoxIt();
+          })*/
+          $("select").selectBoxIt({ native: false });
       }
       
       //document.getElementById("main").style.display = "block";
       
+      function resetMap() {
+        map.resetZoom();
+      }
       
       
         

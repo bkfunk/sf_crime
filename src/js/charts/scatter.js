@@ -7,9 +7,9 @@ function scatterPlot() {
   var width,
       height,
       wScale = 1, hScale = 1,
-      xValue = function(d) { return d['x'] },
-      yValue = function(d) { return d['y'] },
-      idValue = function(d) { return d['id'] },
+      xValue = function(d) { return d[series]['x'] },
+      yValue = function(d) { return d[series]['y'] },
+      idValue = function(d) { return d[series]['id'] },
       markerSizeValue = function(d) { return plotWidth / 100; }, // constant by
                                                            // default but could
                                                            // be function of d
@@ -32,7 +32,8 @@ function scatterPlot() {
           console.log("i:", i, "d:", d);
           console.log("this:", this);
         }
-      };
+      },
+      series = "incidents";
       
   var svg, markers,
       data, parentId,
@@ -110,6 +111,13 @@ function scatterPlot() {
   plot.updateData = function(dataset) {
     if (arguments.length) dataIn = dataset;
     data = dataIn.filter(function(d) {
+      /*var isGood = false;
+      try {
+        isGood = !isNaN(xValue(d)) && !isNaN(yValue(d));
+        return isGood;
+      } catch(err) {
+        return false;
+      }*/
       return (!isNaN(xValue(d)) && !isNaN(yValue(d)));
     });
     //console.log(data);
@@ -294,13 +302,13 @@ function scatterPlot() {
   };
   
   plot.margin = function(_) {
-    console.log(margin);
+    //console.log(margin);
     if (!arguments.length) return margin;
     for (key in _) {
-      console.log(key);
+      //console.log(key);
       margin[key] = _[key];
     }
-    console.log(margin);
+    //console.log(margin);
     return plot;
   };
   

@@ -13,15 +13,15 @@ function multiMap() {
       quantScale,
       svg,
       mapContainer,
-      main, nMain,
+      main, nMain, mapGroup,
       legend, legendHeader, legendBody, legendAxisg,
       features, nFeatures,
       dataIn,
       tracts, neighborhoods,
       featureListeners = { },
       baseZoom = 318,
-      zoom = 1.0,
       mapCreated = false;
+      //series = "incidents";
       
   var zoom;
     
@@ -54,28 +54,19 @@ function multiMap() {
         .data([features]).enter()
           .call(createMap);
       map.updateMap();
+      addZoom();
     });
   }
   
   function createMap(selection) {
     projection = d3.geo.mercator()
                         .center([-122.4391, 37.7671]);
-    //nProjection = d3.geo.conicConformal()
-      //      .parallels([37.06666666666667, 38.43333333333333]);
-                   // .center([-122.4391, 37.7671]);
     quantScale = d3.scale.quantize();
     
     path = d3.geo.path();
     nPath = d3.geo.path();
-    
-    //zoom = d3.behavior.zoom();
-                  //.on("zoom", zoomed);
-                
-                  
+                 
     svg = selection.append("svg").attr("class", "main-svg");
-            //.append("g").call(zoom);
-    //zoom(svg);
-    
     
     // Create hatch pattern for uncolored tracts
     svg.append("defs")
@@ -96,8 +87,17 @@ function multiMap() {
           
     // ADD CLIP PATH
     mapContainer = svg.append("g").attr("class", "mapContainer");
-    main = mapContainer.append("g").attr("class", "main");
-    nMain = mapContainer.append("g").attr("class", "nMain");
+    mapGroup = mapContainer.append("g")
+    
+    mapGroup.append("clipPath")
+                        .attr("class", "clip-path")
+                        .attr("id",  "map-clip-path")
+                      .append("rect");
+    
+    main = mapGroup.append("g").attr("class", "main").attr("clip-path", "url(#map-clip-path)");
+    nMain = mapGroup.append("g").attr("class", "nMain").attr("clip-path", "url(#map-clip-path)");
+    
+    
     legend = mapContainer.append("g").attr("class", "legend");
     legendHeader = legend.append("g").attr("class", "legend-header");
     legendBody = legend.append("g").attr("class", "legend-body");
@@ -108,90 +108,50 @@ function multiMap() {
     legendHeader.append("text").attr("class", "header-label")
       .text("Off Plot");
       
-    
+    map.resizeMap();
     mapCreated = true;
   }
   map.updateData = function(datasets) { 
     if (arguments.length) dataIn = datasets;
-    console.log(dataIn);
+    
     features = featureArray(dataIn[0]);
     nFeatures = dataIn[1];
-    //console.log(nFeatures);
     
     return map;
   };
   
   map.updateMap = function() {
-    width = plotWidth - margin.left - margin.right;
-    height = plotHeight - margin.top - margin.bottom;
-    mapWidth = (legendOrientation === "horizontal") ? width : width - legendSize; // square map; remainder goes to legend
-    mapHeight = (legendOrientation === "vertical") ? height : height - legendSize;
+    map.updateData();
     
-    projection.translate([mapWidth/2, mapHeight/2])
-                        .scale(zoom * baseZoom * Math.max(mapWidth, mapHeight));
-    //nProjection.translate([mapWidth/2, mapHeight/2])
-    //                    .scale(100* zoom * baseZoom * Math.max(mapWidth, mapHeight));;
-                
+    // Set scales
     quantScale.range(d3.range(nColors));
     quantScale.domain(d3.extent(features.map(value)));
     
-    path.projection(projection);
-    nPath.projection(projection);
-    
-    zoom = d3.behavior.zoom()
-                  .on("zoom", zoomed);
-    zoom.translate(projection.translate())
-                  .scale(projection.scale())
-                  .scaleExtent([projection.scale(), 8*projection.scale()]);
-    
-    svg.attr("width", plotWidth)
-        .attr("height", plotHeight);
-        
-    zoom(svg);
-        
-    main.attr("transform", _do("translate", margin.left, margin.top));
-    nMain.attr("transform", _do("translate", margin.left, margin.top));
-    
-    if (legendOrientation === "horizontal") {
-      legend.attr("transform", _do("translate", margin.left, margin.top + mapHeight));
-    } else {
-      legend.attr("transform", _do("translate", margin.left + mapWidth,
-                                 margin.top));
-    }
-    
+    // Update legend
     map.updateLegend();
     
+    // Update tracts
     tracts = main.selectAll(".tract")
             .data(features, idValue);
     map.enterTracts(tracts.enter());
     map.updateTracts();
     map.exitTracts(tracts.exit());
     
-    map.updateFeatures();
     
-    console.log(nFeatures.features);
+    // Update feature listeners
+    map.updateFeatures();
 
     neighborhoods = nMain.selectAll(".neighborhood")
-            .data(nFeatures.features)
-          .enter()
+            .data(nFeatures.features);
+    neighborhoods.enter()
             .append("path")
-            .attr("class", "neighborhood")
-            .attr("d", nPath);
+            .attr("class", "neighborhood");
+    neighborhoods.exit().remove();
             
     nMain.selectAll("text")
         .data(nFeatures.features.filter(function(d) { return typeof d.id !== "undefined"; }))
-      .enter().append("text")
-        .attr("class", function(d) {
-          var lineClass = (d.label.line) ? "lineLabel" : "";
-          return "n-text " + d.id.replace(" ", "") + " " + lineClass;
-        })
-        .attr("transform", function(d) {
-          var x = d.label.x || 0;
-          var y = d.label.y || 0;
-          var rotate = d.label.rotate || 0;
-          return _do("translate", path.centroid(d)[0] + x, path.centroid(d)[1] + y) + " " +
-                _do("rotate", rotate);
-        });
+      .enter().append("text");
+        
     
     var nLines = nFeatures.features.filter(function(d) {
         if (typeof d.label === "undefined" ) return false;
@@ -200,20 +160,88 @@ function multiMap() {
       });
     
     nMain.selectAll("line")
-      .data(nLines)
-      .enter().append("line")
-        .attr("x1", function(d) { console.log(d); return path.centroid(d)[0]; })
-        .attr("y1", function(d) { return path.centroid(d)[1]; })
-        .attr("x2", function(d) { return path.centroid(d)[0] + d.label.x })
-        .attr("y2", function(d) { return path.centroid(d)[1] + d.label.y })
-        
-    var lineHeight = 10;
+        .data(nLines)
+      .enter().append("line");
+ 
     nMain.selectAll("text").selectAll("tspan")
         .data(function(d) { return d.label.label.split("|"); })
-      .enter().append("tspan")
+      .enter().append("tspan");
+        
+    
+    map.updateNeighborhoods();
+    return map;
+  };
+  
+  function addZoom() {
+    zoom = d3.behavior.zoom()
+                 .on("zoom", zoomed);
+    zoom.translate(projection.translate())
+                  .scale(projection.scale())
+                  .scaleExtent([projection.scale(), 8*projection.scale()]);
+    zoom(svg);
+  }
+  
+  
+  map.resizeMap = function() {
+    width = plotWidth - margin.left - margin.right;
+    height = plotHeight - margin.top - margin.bottom;
+    mapWidth = (legendOrientation === "horizontal") ? width : width - legendSize; // square map; remainder goes to legend
+    mapHeight = (legendOrientation === "vertical") ? height : height - legendSize;
+    
+    // Set SVG dimensions
+    svg.attr("width", plotWidth)
+        .attr("height", plotHeight);
+    
+    // Translate map groups
+    //main.attr("transform", _do("translate", margin.left, margin.top));
+    //nMain.attr("transform", _do("translate", margin.left, margin.top));
+    mapGroup.attr("transform", _do("translate", margin.left, margin.top));
+    
+    d3.select("#map-clip-path rect").attr("width", mapWidth)
+                                    .attr("height", mapHeight);
+    // Update legend
+    if (legendOrientation === "horizontal") {
+      legend.attr("transform", _do("translate", margin.left, 2 * margin.top + mapHeight));
+    } else {
+      legend.attr("transform", _do("translate", 2 * margin.left + mapWidth,
+                                 margin.top));
+    }
+    
+    
+    projection.translate([mapWidth/2, mapHeight/2])
+              .scale(baseZoom * Math.max(mapWidth, mapHeight));
+    //console.log("projection:", projection.scale(), projection.translate());
+  };
+  
+  
+  map.updateNeighborhoods = function(duration) {
+    duration = duration || 0;
+    nPath.projection(projection);
+    neighborhoods
+      .transition().duration(duration)
+      .attr("d", nPath);
+    
+    // Add labels
+    nMain.selectAll("text")
+        .attr("class", function(d) {
+          var lineClass = (d.label.line) ? "lineLabel" : "";
+          return "n-text " + d.id.replace(" ", "") + " " + lineClass;
+        })
+        .transition().duration(duration)
+        .attr("transform", function(d) {
+          var x = d.label.x || 0;
+          var y = d.label.y || 0;
+          var rotate = d.label.rotate || 0;
+          return _do("translate", nPath.centroid(d)[0] + x, nPath.centroid(d)[1] + y) + " " +
+                _do("rotate", rotate);
+        });
+    
+    var lineHeight = 10;
+    nMain.selectAll("text").selectAll("tspan")
         .attr("class", function(d, i) {
           return "n-label line-" + i;
         })
+        .transition().duration(duration)
         .attr("font-size", lineHeight)
         .attr("x", 0)
         .attr("y", function(d, i) {
@@ -221,22 +249,36 @@ function multiMap() {
         })
         .text(function(d) { return d; });
     
-    
+    // Add lines for labels that don't fit
+    nMain.selectAll("line")
+      .transition().duration(duration)
+      .attr("x1", function(d) { return nPath.centroid(d)[0]; })
+      .attr("y1", function(d) { return nPath.centroid(d)[1]; })
+      .attr("x2", function(d) { return nPath.centroid(d)[0] + d.label.x })
+      .attr("y2", function(d) { return nPath.centroid(d)[1] + d.label.y })
+      
   };
+  
+  
   map.enterTracts = function(newTracts) {
     newTracts.append("path")
       
   };
-  map.updateTracts = function() {
+  map.updateTracts = function(duration) {
+    duration = duration || 0;
+    path.projection(projection);
+    
+    //tracts.
     tracts.attr("class", function(d) {
-            var tractClass = "tract tract-" + idValue(d) +
-               " q" +
-                      ((typeof value(d) !== "undefined" &&
-                        value(d) !== null)
+            var plotted = d3.select(this).classed("plotted") ? " plotted" : "";
+            var q = (typeof value(d) !== "undefined" && value(d) !== null)
                        ? quantScale(value(d)) + "-" + nColors
-                       : "NA");
+                       : "NA";
+            var tractClass = "tract tract-" + idValue(d) +
+               " q" + q + plotted;
             return tractClass;
           })
+          .transition().duration(duration)
           .attr("d", path);
   };
   map.exitTracts = function(deadTracts) {
@@ -291,7 +333,7 @@ function multiMap() {
       var axisGTransformY = legendDim["shortSide"] * (1 - tickLabelProp);
       
       // Function of i (series number, 0-indexed)
-      var headerTransformX = function(i) { return 0; /*bodyTransformX - margin.left;*/ };
+      var headerTransformX = function(i) { return .9 * bodyTransformX; /*bodyTransformX - margin.left;*/ };
       var headerTransformY = function(i) { return (i + 0.5) * boxDim["shortSide"]; };
       var headerRotate = 0;
       
@@ -564,17 +606,26 @@ function multiMap() {
       translate[0] - centroid[0] + width / 2,
       translate[1] - centroid[1] + height / 2
     ]);
-  
+    
     zoom.translate(projection.translate());
-  
+    map.updateTracts(500);
+    map.updateNeighborhoods(440);
+  /*
     svg.selectAll("path").transition()
         .duration(700)
-        .attr("d", path);
+        .attr("d", path);*/
   };
   
   function zoomed() {
+    translation = d3.event.translate;
+    scale = d3.event.scale;
     if (mapCreated) {
-      projection.translate(d3.event.translate).scale(d3.event.scale);
+      //console.log(zoom.scale(), zoom.translate());
+      projection.translate(translation).scale(scale);
+      
+      map.updateTracts();
+      map.updateNeighborhoods();
+      /*
       svg.select(".main").selectAll("path").attr("d", path);
       svg.select(".nMain").selectAll("path").attr("d", nPath);
       svg.select(".nMain").selectAll("text").attr("transform", function(d) {
@@ -585,22 +636,40 @@ function multiMap() {
                 _do("rotate", rotate);
         });
       svg.select(".nMain").selectAll("line")
-        .attr("x1", function(d) { console.log(d); return path.centroid(d)[0]; })
+        .attr("x1", function(d) { return path.centroid(d)[0]; })
         .attr("y1", function(d) { return path.centroid(d)[1]; })
         .attr("x2", function(d) { return path.centroid(d)[0] + d.label.x })
-        .attr("y2", function(d) { return path.centroid(d)[1] + d.label.y })
+        .attr("y2", function(d) { return path.centroid(d)[1] + d.label.y });
+      */
     }
     
+  }
+  map.resetZoom = function() {
+    if (mapCreated) {
+      //zoom.scale(1).translate([0,0]);
+      projection.translate([mapWidth/2, mapHeight/2])
+              .scale(baseZoom * Math.max(mapWidth, mapHeight));
+      console.log("projection:", projection.scale(), projection.translate());
+      map.updateTracts(500);
+      map.updateNeighborhoods(500);
+      addZoom();
+      //zoom = d3.behavior.zoom()
+      //          .on("zoom", zoomed);
+      //zoom.translate(projection.translate())
+      //              .scale(projection.scale())
+      //              .scaleExtent([projection.scale(), 8*projection.scale()]);
+      //zoom(svg);
+      //zoom.translate([mapWidth/2, mapHeight/2])
+      //    .scale(zoom * baseZoom * Math.max(mapWidth, mapHeight));
+      //zoom.event(svg);
+    }
   }
   
   
   map.zoom = function(_) {
     if (!arguments.length) return zoom;
     zoom = _;
-    if (mapCreated) {
-      projection.scale(zoom * baseZoom * width);
-      svg.selectAll("path").transition().attr("d", path);
-    }
+    
     return map;
   };
   return map;

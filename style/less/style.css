@@ -1,4 +1,42 @@
 /* CSS crunched with Crunch - http://crunchapp.net/ */
+/* TRACTS */
+/* Default tract */
+.tract {
+  stroke: #999;
+  stroke-width: 1;
+  stroke-opacity: .4;
+  fill: url("#diagonalHatch");
+}
+.neighborhood {
+  stroke: #0000ff;
+  stroke-width: 1;
+  fill: none;
+  pointer-events: none;
+  opacity: .8;
+}
+.nMain text {
+  fill: #0000ff;
+  font-family: 'Noto Sans', sans-serif;
+  font-size: .5em;
+  text-anchor: middle;
+  pointer-events: none;
+}
+.nMain text.lineLabel {
+  text-anchor: start;
+}
+.nMain line {
+  stroke: #0000ff;
+  stroke-width: 1;
+  fill: none;
+  opacity: .7;
+}
+.hatchRect {
+  fill: #AAA;
+  stroke: none;
+}
+.hatchPath {
+  stroke: #666;
+}
 /******************
  *       MAP      *
  ******************/
@@ -72,24 +110,10 @@
 .qNA {
   pointer-events: none;
 }
-/* TRACTS */
-/* Default tract */
-.tract {
-  stroke: navy;
-  stroke-width: 1;
-  fill: url("#diagonalHatch");
-}
-.hatchRect {
-  fill: #AAA;
-  stroke: none;
-}
-.hatchPath {
-  stroke: #666;
-}
 /* LEGEND */
 .legend .label,
 .legend .header-label {
-  font-family: sans-serif;
+  font-family: 'Noto Sans', sans-serif;
   font-size: xx-small;
   alignment-baseline: central;
 }
@@ -138,7 +162,7 @@ svg {
   shape-rendering: crispEdges;
 }
 .axis text {
-  font-family: sans-serif;
+  font-family: 'Noto Sans', sans-serif;
   font-size: 11px;
 }
 .line {
@@ -330,10 +354,82 @@ svg {
   -moz-border-radius: 0.5em !important;
   border-radius: 0.5em !important;
 }
+.selectboxit-option-anchor span,
+.selectboxit-text span {
+  display: inline;
+}
+.select-varname {
+  font-weight: bold;
+}
+header {
+  margin: 0;
+  padding: 10px;
+  background: #87cefa;
+  position: relative;
+}
+header h1 {
+  font-size: 2em;
+  font-family: 'Noto Sans', sans-serif;
+  height: 1em;
+  position: relative;
+  left: 0%;
+  top: 50%;
+  margin: -0.5em 1em 0;
+  padding: 0;
+}
+header h1 em {
+  font-weight: 100;
+  font-style: normal;
+}
+#mode {
+  height: 1em;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 50%;
+  margin: -0.5em 0 0 -25%;
+  padding: 0;
+  text-align: center;
+}
+#mode .ui-button {
+  background: #999999;
+  font-family: 'Noto Sans', sans-serif;
+  border-left: 1px solid #666666;
+  border-right: 1px solid #666666;
+}
+#mode .ui-button.ui-corner-left {
+  border-top-left-radius: 1em;
+  -webkit-border-top-left-radius: 1em;
+  -moz-border-radius-topleft: 1em;
+  border-bottom-left-radius: 1em;
+  -webkit-border-bottom-left-radius: 1em;
+  -moz-border-radius-bottomleft: 1em;
+  border-left: none;
+}
+#mode .ui-button.ui-corner-right {
+  border-top-right-radius: 1em;
+  -webkit-border-top-right-radius: 1em;
+  -moz-border-radius-topright: 1em;
+  border-bottom-right-radius: 1em;
+  -webkit-border-bottom-right-radius: 1em;
+  -moz-border-radius-bottomright: 1em;
+  border-right: none;
+}
+#mode .ui-button.ui-state-active {
+  background: #0000ff;
+}
 .hidden {
   display: none;
 }
+body {
+  margin: 0;
+  padding: 0;
+}
+header {
+  height: 4em;
+}
 #main {
+  width: 1050px;
   margin: 0 auto;
 }
 #figure {
@@ -363,6 +459,19 @@ svg {
 }
 #figure-footer {
   clear: both;
+}
+.figure-footer {
+  float: left;
+  width: 46%;
+  margin-left: 2%;
+  margin-right: 2%;
+}
+label {
+  font-family: 'Noto Sans', sans-serif;
+}
+.select-varname,
+.select-varlabel {
+  font-size: .8em;
 }
 #explanation {
   clear: both;

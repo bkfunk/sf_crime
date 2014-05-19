@@ -1,29 +1,77 @@
 #!bin/bash
 
-shpfile="geo/tl_2010_06_tract10/tl_2010_06_tract10.shp"
+#shpfile="geo/tl_2010_06_tract10/tl_2010_06_tract10.shp"
+shpfile="geo/gz_2010_06_140_00_500k/gz_2010_06_140_00_500k.shp"
 jsonfile="geo/sf_tracts.json"
 topojsonfile="geo/sf_tracts_topo.json"
 small_topojsonfile="geo/sf_tracts_topo_small.json"
+
+echo "Converting tracts..."
 
 rm $jsonfile || echo "Could not remove file, may not exist: $jsonfile"
 ogrinfo $shpfile -al -so
 
 ogr2ogr \
   -f GeoJSON \
-  -where 'COUNTYFP10="075"' \
+  -where 'COUNTY="075"' \
+  -t_srs EPSG:4326 \
   $jsonfile \
   $shpfile
   
 ogrinfo $jsonfile -al -so
 
 topojson \
-  --id-property GEOID10 \
+  --id-property TRACT \
+  -p NAME,CENSUSAREA \
+  --simplify-proportion .5 \
   -o $topojsonfile \
   $jsonfile
 
 # There's some error here with -o
+#topojson \
+#  --id-property GEOID10 \
+#  --simplify-proportion 0.5 \ 
+#  -o $small_topojsonfile \
+#  -- $jsonfile
+
+echo "Converting neighborhoods"
+
+shpfile_ne="geo/planning_neighborhoods/planning_neighborhoods.shp"
+jsonfile_ne="geo/sf_neighborhoods_exact.json"
+topojsonfile_ne="geo/sf_neighborhoods_exact_topo.json"
+
+rm $jsonfile_ne || echo "Could not remove file, may not exist: $jsonfile2"
+ogrinfo $shpfile_ne -al -so
+
+ogr2ogr \
+  -f GeoJSON \
+  -t_srs EPSG:4326 \
+  $jsonfile_ne \
+  $shpfile_ne
+
 topojson \
-  --id-property GEOID10 \
-  --simplify-proportion=0.5 \ 
-  -o $small_topojsonfile \
-  -- $jsonfile
+  --id-property neighborho \
+  --simplify-proportion .5 \
+  -o $topojsonfile_ne \
+  $jsonfile_ne
+
+# Custom neighborhoods
+shpfile_n="geo/gz_2010_06_140_00_500k/neighborhoods.shp"
+jsonfile_n="geo/sf_neighborhoods.json"
+topojsonfile_n="geo/sf_neighborhoods_topo.json"
+
+rm $jsonfile_n || echo "Could not remove file, may not exist: $jsonfile2"
+ogrinfo $shpfile_n -al -so
+
+ogr2ogr \
+  -f GeoJSON \
+  -t_srs EPSG:4326 \
+  $jsonfile_n \
+  $shpfile_n
+
+topojson \
+  --id-property neighborho \
+  -p TRACT,NAME,CENSUSAREA \
+  --simplify-proportion .5 \
+  -o $topojsonfile_n \
+  $jsonfile_n

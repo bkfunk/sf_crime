@@ -1,5 +1,51 @@
+@legend-font: @ui-font;
+@axis-font: @ui-font;
+@neighborhood-font: @ui-font;
 
-@font: sans-serif;
+/* TRACTS */
+/* Default tract */
+.tract {
+  stroke: #999;
+  stroke-width: 1;
+  stroke-opacity: .4;
+  fill: url("#diagonalHatch"); // will be overwritten when there is data available
+}
+
+@neighborhood-color: blue;
+.neighborhood {
+    stroke: @neighborhood-color;
+    stroke-width: 1;
+    fill: none;
+    pointer-events: none;
+    opacity: .8;
+}
+.nMain text {
+    fill: @neighborhood-color;
+    font-family: @neighborhood-font;
+    font-size: .5em;
+    text-anchor: middle;
+    pointer-events: none;
+}
+.nMain text.lineLabel {
+    text-anchor: start;
+}
+.nMain line {
+    stroke: @neighborhood-color;
+    stroke-width: 1;
+    fill: none;
+    opacity: .7;
+}
+
+.hatchRect { // Hatch pattern background
+  fill: #AAA;
+  stroke: none;
+}
+.hatchPath { // Hatch pattern foreground
+  stroke: #666;
+}
+
+
+@font: @ui-font;
 @highlight-stroke-color: red;
 
 
@@ -43,26 +89,12 @@
 /* Disabled tracts */
 .qNA { pointer-events: none; }
 
-/* TRACTS */
-/* Default tract */
-.tract {
-  stroke: navy;
-  stroke-width: 1;
-  fill: url("#diagonalHatch"); // will be overwritten when there is data available
-}
 
-.hatchRect { // Hatch pattern background
-  fill: #AAA;
-  stroke: none;
-}
-.hatchPath { // Hatch pattern foreground
-  stroke: #666;
-}
 
 /* LEGEND */
 .legend .label,
 .legend .header-label {
-  font-family: @font; //sans-serif;
+  font-family: @legend-font; //sans-serif;
   font-size: xx-small;
   alignment-baseline: central;
 }
@@ -119,7 +151,7 @@ svg {
 }
 
 .axis text {
-    font-family: sans-serif;
+    font-family: @axis-font;
     font-size: 11px;
 }
 .line {

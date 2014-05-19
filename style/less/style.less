@@ -1,11 +1,26 @@
+//@font-face
+@ui-font: 'Noto Sans', sans-serif;
+@logo-font: 'Noto Sans', sans-serif;
+
 @import "plots";
 @import "tooltips";
+@import "widgets";
+@import "header";
 
 .hidden {
   display: none;
 }
 
+body {
+    margin: 0;
+    padding: 0;
+}
+header {
+    height: 4em;
+}
+
 #main {
+    width: 1050px;
   margin: 0 auto;
 }
 #figure {
@@ -39,6 +54,19 @@
 
 #figure-footer {
     clear: both;
+}
+
+.figure-footer {
+    float: left;
+    width: 46%;
+    margin-left: 2%;
+    margin-right: 2%;
+}
+label {
+    font-family: @ui-font;
+}
+.select-varname, .select-varlabel {
+    font-size: .8em;
 }
 
 #explanation {

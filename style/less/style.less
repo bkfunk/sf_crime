@@ -1,0 +1,96 @@
+//@font-face
+@ui-font: 'Noto Sans', sans-serif;
+@logo-font: 'Noto Sans', sans-serif;
+
+@ui-button-color: #CCC;
+@ui-button-border-color: #666;
+@ui-button-active-color: desaturate(skyblue, 20%); //lighten(blue, 20%);
+
+@import "plots";
+@import "tooltips";
+@import "widgets";
+@import "header";
+
+.hidden {
+  display: none;
+}
+
+body {
+    font-family: @ui-font;
+    margin: 0;
+    padding: 0;
+}
+header {
+    height: 4em;
+}
+
+#main {
+    width: 1050px;
+  margin: 0 auto;
+}
+#figure {
+    clear: both;
+}
+
+#scatter-group-container {
+  float: left;
+}
+
+#scatter-container {
+  float: left;
+  clear: left;
+}
+#y-density-container {
+  float: left;
+  clear: right;
+}
+#x-density-container {
+  float: left;
+  clear: left;
+}
+#corner-container {
+  clear: right;
+  float: left;
+}
+
+#map-container {
+  float: left;
+}
+
+#figure-footers {
+    clear: both;
+}
+
+.figure-footer {
+    float: left;
+    width: 50%;
+    //margin-left: 2%;
+    //margin-right: 2%;
+}
+label {
+    font-family: @ui-font;
+}
+
+
+#explanation {
+  clear: both;
+  width: 70%;
+  margin: 0 auto;
+  padding: 30px 0 30px 0;
+}
+
+
+#loading {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+}
+#loading p {
+    text-align: center;
+    vertical-align: middle;
+    margin: 0;
+    height: 100px;
+    width: 100px;
+    margin-left: -50px;
+    margin-top: -50px;
+}

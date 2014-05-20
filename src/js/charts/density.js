@@ -22,6 +22,7 @@ function densityPlot() {
       value = function(d) { return d.value; },
       densityValue = function(d) { return d.densityValue; },
       idValue = function(d) { return d['id'] };
+      //series = "incidents";
   
   // Scales/Axes    
   var xScale = d3.scale.linear(),
@@ -179,15 +180,26 @@ function densityPlot() {
     svg.attr("width", wScale * plotWidth)
         .attr("height", hScale * plotHeight);
     
-    main.attr("transform", _do("translate",  
-        !(flipAxis && orientation === "vertical") ? margin.left : margin.right,
-        !(flipAxis && orientation === "horizontal") ? margin.top : margin.bottom));
+    if (orientation === "horizontal") {
+      main.attr("transform", _do("translate", margin.left, margin.top));
+      width = (plotWidth - margin.left - margin.right);
+      height = (plotHeight - margin.top - margin.bottom);
+      var xmin = 0;
+      var ymin = .1 * height; // make y scale slightly smaller to ensure line doesn't get cut off
+    } else if (orientation === "vertical") {
+      main.attr("transform", _do("translate", margin.top, margin.right));
+      width = (plotWidth - margin.top - margin.bottom);
+      height = (plotHeight - margin.left - margin.right);
+      var xmin = .1 * width; // make x scale slightly smaller to ensure line doesn't get cut off
+      var ymin = 0;
+    }
+        //!(flipAxis && orientation === "vertical") ? margin.left : margin.right,
+        //!(flipAxis && orientation === "horizontal") ? margin.top : margin.bottom));
     
-    width = (plotWidth - margin.left - margin.right);
-    height = (plotHeight - margin.top - margin.bottom);
     
-    var xmin = (orientation === "vertical") ? .1 * width : 0;
-    var ymin = (orientation === "horizontal") ? .1 * height : 0;
+    
+    //var xmin = (orientation === "vertical") ? .1 * width : 0;
+    //var ymin = (orientation === "horizontal") ? .1 * height : 0;
     
     xScale.range(
         // Unless vertical and flipped
@@ -281,17 +293,17 @@ function densityPlot() {
       main.select(".x-axis")
           .classed("hidden", (showAxes.indexOf("x") === -1))
           .call(xAxis);
-      xAxisg.append("text")
+      /*xAxisg.append("text")
         .attr("x", width / 2)
         .attr("y", margin.bottom * .8)
         .style("text-anchor", "middle")
         .style("font-weight", "bold")
-        .text(axisLabelText);
-      main.select(".x-axis").selectAll(".tick").selectAll("text")
+        .text(axisLabelText);*/
+      /*main.select(".x-axis").selectAll(".tick").selectAll("text")
         .each(function(text, axis, i) {
           //console.log(arguments, this);
           //console.log(text, ":", this.offsetWidth);
-        });
+        });*/
     }
     
     // Update y-axis
@@ -401,16 +413,19 @@ function densityPlot() {
     }
     return plot;
   };
+  
   plot.margin = function(_) {
     if (!arguments.length) return margin;
-    margin = _;
-    if (typeof update === "undefined" || update) plot.updatePlot();
+    for (key in _) {
+      margin[key] = _[key];
+    }
     return plot;
   };
-  
+
+  /*
   plot.plotContainer = function(_) {
     if (!arguments.length) return plotContainer;
-  };
+  };*/
   
   plot.showAxes = function(_) {
     if (!arguments.length) return showAxes;

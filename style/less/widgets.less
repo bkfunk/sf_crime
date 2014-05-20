@@ -1,0 +1,106 @@
+//.selectboxit-option-anchor span.select-varname, 
+@select-font-size: .8em;
+@select-line-height: @select-font-size * 1.5;
+
+.select-container {
+    margin: 10px auto;
+}
+.figure-footer label {
+    float: left;
+    font-size: 1em;
+    line-height: @select-line-height;
+    height: @select-line-height;
+    margin-right: .4em;
+}
+
+// Actual text
+.selectboxit-container span,
+.selectboxit-container .selectboxit-options a,
+.ui-button .ui-button-text {
+    font-family: @ui-font;
+    line-height: @select-line-height;
+    height: @select-line-height;
+    display: inline-block;
+    vertical-align: middle;
+    padding: 0;
+}
+
+.selectboxit-text,
+.selectboxit-container .selectboxit-option a {
+    max-width: 350px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.selectboxit-option-anchor span,
+.selectboxit-text span {
+    display: inline;
+}
+.selectboxit span.selectboxit-option-icon-container,
+.selectboxit-container span.selectboxit-option-icon-container {
+    display: none;
+}
+
+.select-varname {
+    font-weight: bold;
+}
+.select-varname, .select-varlabel,
+.ui-button .ui-button-text {
+    font-size: @select-font-size;
+    //line-height: 1em;
+}
+
+
+.ui-button {
+    background: @ui-button-color;
+    font-family: @ui-font;
+    font-size: @select-font-size;
+    border-left: 1px solid @ui-button-border-color;
+    border-right: 1px solid @ui-button-border-color;
+}
+.ui-button.ui-corner-left {
+     border-top-left-radius: 1em;
+    -webkit-border-top-left-radius: 1em;
+    -moz-border-radius-topleft: 1em;
+     border-bottom-left-radius: 1em;
+    -webkit-border-bottom-left-radius: 1em;
+    -moz-border-radius-bottomleft: 1em;
+    border-left: none;
+}
+.ui-button.ui-corner-right {
+     border-top-right-radius: 1em;
+    -webkit-border-top-right-radius: 1em;
+    -moz-border-radius-topright: 1em;
+     border-bottom-right-radius: 1em;
+    -webkit-border-bottom-right-radius: 1em;
+    -moz-border-radius-bottomright: 1em;
+    border-right: none;
+}
+.ui-button.ui-state-active {
+    background: @ui-button-active-color;
+}
+
+
+.figure-footer .ui-buttonset {
+    display: inline;
+    float: left;
+}
+
+.figure-footer .ui-button {
+    padding: 0 .8em;
+    height: @select-line-height;
+}
+
+#resetMapButton {
+    font-family: @ui-font;
+    margin: 0 3em;
+    padding: 0 .8em;
+    float: right;
+    height: @select-line-height;
+    line-height: @select-line-height;
+    font-size: @select-font-size;
+}
+
+#mode-toggle {
+    display: none;
+}

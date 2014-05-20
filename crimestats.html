@@ -1,31 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!--link href='http://fonts.googleapis.com/css?family=Quicksand:300,400' rel='stylesheet' type='text/css'-->
+    <link href='http://fonts.googleapis.com/css?family=Noto+Sans:400,700,400italic' rel='stylesheet' type='text/css'>
     <meta charset="utf-8">
-    <title>D3 Test</title>
-    <!--<link rel="stylesheet" href="//code.jquery.com/ui/1.10.4/themes/cupertino/jquery-ui.css">-->
-    <link rel="stylesheet" href="style/style.css">
+    <title>SF Traction</title>
       
     <!--<script type="text/javascript" src="lib/underscore/underscore-min.js"></script>-->
-    <!--script type="text/javascript" src="lib/d3/d3.js"></script-->
-    <script type="text/javascript" src="bower_components/d3/d3.js"></script>
-    <script type="text/javascript" src="bower_components/d3-tip/index.js"></script>
+    <!--script type="text/javascript" src="lib/d3/d3.min.js"></script-->
+    <script type="text/javascript" src="lib/d3/d3.js"></script>
     <script type="text/javascript" src="lib/d3/lib/science/science.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/science/science.stats.min.js"></script>
     <script type="text/javascript" src="lib/d3/lib/colorbrewer/colorbrewer.js"></script>
     <script type="text/javascript" src="lib/topojson/topojson.v1.min.js"></script>
     <script type="text/javascript" src="lib/queue/queue.min.js"></script>
-    <!--script type="text/javascript" src="lib/charts/twoway.js"></script-->
-    <script type="text/javascript" src="lib/charts/density.js"></script>
-    <script type="text/javascript" src="lib/charts/scatter.js"></script>
-    <script type="text/javascript" src="lib/charts/map.js"></script>
+    <script type="text/javascript" src="lib/jquery/jquery-1.11.1.min.js"></script>
+    <script type="text/javascript" src="lib/jquery-ui/js/jquery-ui-1.10.4.custom.min.js"></script>
+    <script type="text/javascript" src="lib/jquery.selectBoxIt/src/javascripts/jquery.selectBoxIt.min.js"></script>
     
-    <!--<script type="text/javascript" src="lib/charts/test_scatter.js"></script>
-    <!--<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-    <script src="//code.jquery.com/ui/1.10.4/jquery-ui.js"></script>-->
+    
+    <script type="text/javascript" src="src/js/charts/density.js"></script>
+    <script type="text/javascript" src="src/js/charts/scatter.js"></script>
+    <script type="text/javascript" src="src/js/charts/map.js"></script>
+    <script type="text/javascript" src="src/js/tooltip.js"></script>
+    
+    
     <!--<script src="http://d3js.org/queue.v1.min.js"></script>-->
     
+    <link rel="stylesheet" href="lib/jquery.selectBoxIt/src/stylesheets/jquery.selectBoxIt.css">
+    <link rel="stylesheet" href="lib/jquery-ui/css/no-theme/jquery-ui-1.10.4.custom.css">  
+    
+    <link rel="stylesheet" href="style/less/style.css">
+    
+    <style type="text/css">
+      /* Hide unstyled content */
+      .js #main { display: none; }
+      .js header { display: none; }      
+    </style>
+    
     <script type="text/javascript">
+      document.documentElement.className = "js"; // add js class to doc
+                                                  // if js is enabled, this will hide FOUC
+      
       function _do(f) {
         /* I get tired of all the "fn_name(" + arg + ")" business,
           so I use _do to take the (string) name of a function, then any number
@@ -37,155 +53,410 @@
         return f + "(" + args + ")";
       }
       
-      function extractField(dataset, fieldName) {
-        // Create field object, starting with the label
-        var field = { label: fieldName };
-        
-        // Create an array of numeric (float) values
-        field.values = dataset.map(function(d) {
-          return parseFloat(d[fieldName]);
-        });
-        
-        // Create an array of string values
-        field.stringValues = dataset.map(function(d) {
-          return d[fieldName];
-        });
-        
-        // Create minimum and maximum functions for the field
-        // This is just a shorthand.
-        field.getMin = function() { return d3.min(field.values); };
-        field.getMax = function() { return d3.max(field.values); };
-        
-        // Unlike the overall min/max, the selected min/max are set by us,
-        // so they don't need to be functions, since they don't reflect the
-        // dynamic state of the data
-        field.selected = {
-          min: field.getMin(),
-          max: field.getMax()
-        };
-        
-        // The function to select for values
-        field.selected.selector = function(element) {
-          return (element >= field.selected.min && element <= field.selected.max)
-        };
-        
-        // A function returning the selected values
-        /*field.selected.getValues = function() {
-          return field.values.filter(field.selected.selector);
-        };*/
-        
-        return field;
+      
+      function getOffsetRect(elem) {
+          // Get bounding box (doesn't take scroll into consideration)
+          var box = elem.getBoundingClientRect()
+          
+          var body = document.body
+          var docElem = document.documentElement
+          
+          // Calculate scroll (different versions based on browsers)
+          var scrollTop = window.pageYOffset || docElem.scrollTop || body.scrollTop
+          var scrollLeft = window.pageXOffset || docElem.scrollLeft || body.scrollLeft
+          
+          // document can be shifted in ID
+          var clientTop = docElem.clientTop || body.clientTop || 0
+          var clientLeft = docElem.clientLeft || body.clientLeft || 0
+          
+          // (4)
+          var top  = box.top +  scrollTop - clientTop
+          var left = box.left + scrollLeft - clientLeft
+          
+          return { top: Math.round(top), left: Math.round(left),
+                  width: Math.round(box.width), height: Math.round(box.height) }
       }
       
-      rotateElement = function(element, angle) {
-        
-        // NOTE Rotate cannot be chained
-        var width = element.offsetWidth;
-        var height = element.offsetHeight;
-        var selection = d3.select(element);
-        
-        // modulo out full rotations and convert to radians
-        angle = angle % 360;
-        theta = angle * (Math.PI / 180);
-        //var H = height * Math.cos(theta) + width * Math.sin(theta);
-        //var W = height * Math.sin(theta) + width * Math.cos(theta);
-        //var H = height * Math.sin(theta);
-        //var W = width  * Math.cos(theta);
-        if (0 <= angle && angle < 90) {
-          var dx = height * Math.sin(theta);
-          var dy = 0;
-          //var H = height * Math.cos(theta) + width * Math.sin(theta);
-          //var W = height * Math.sin(theta) + width * Math.cos(theta);
-        
-        } else if (90 <= angle && angle < 180) {
-          var dx = -width * Math.cos(theta) + height * Math.sin(theta);
-          var dy = -height * Math.cos(theta);
-          //var H = height * Math.cos(theta) - width * Math.sin(theta);
-          //var W = height * Math.sin(theta) - width * Math.cos(theta);
-        } else if (180 <= angle && angle < 270) {
-          var dx = -width * Math.cos(theta);
-          var dy = -width * Math.sin(theta) - height * Math.cos(theta);
-          //var H = height * Math.cos(theta) + width * Math.sin(theta);
-          //var W = height * Math.sin(theta) + width * Math.cos(theta);
-        } else {
-          var dx = 0;
-          var dy = -width * Math.sin(theta);
-          //var H = height * Math.cos(theta) - width * Math.sin(theta);
-          //var W = height * Math.sin(theta) - width * Math.cos(theta);
-          
-        }
-        
-        //wScale = Math.abs(W / width);
-        //hScale = Math.abs(H / height);
-        selection.attr("transform", _do("translate", dx, dy) + " "
-                           + _do("rotate", angle));
-        return {"dx" : dx, "dy" : dy};
-      };
+      
       
     </script>
   </head>
-  <body>
-    <div id="main">
-      <div id="selects">
-        <label for="x-select">X Variable:</label>
-        <select id="x-select"></select>
-        
-        <label for="y-select">Y Variable:</label>
-        <select id="y-select"></select>
-        
-        <label for="map-select">Map Variable:</label>
-        <select id="map-select"></select>
-      </div>
-      <div id="info"></div>
-      <div id="scatter-group-container">
-        
-        <div id="scatter-container" class="scatter plot-container">
+  <body onLoad="loadVis()">
+    <div id="content">
+      <header>
+        <h1>SF Tract<em>ion</em></h1>
+          <div id="mode-toggle">
+              <input type='radio' name="mode" value="incidents" id="incidents"><label for="incidents">Incidents</label>
+              <input type='radio' name="mode" value="resolved" id="resolved"><label for="resolved">Resolved</label>
+              <input type='radio' name="mode" value="arrests" id="arrests"><label for="arrests">Arrests</label>
+          </div>
+      </header>
+      <div id="loading"><p>Loading...</p></div>
+      <div id="main">
+        <div id="figure">
+          <div id="scatter-group-container">
+            <div id="scatter-container" class="scatter plot-container"></div>
+            <div id="y-density-container" class="y density plot-container"></div>
+            <div id="x-density-container" class="x density plot-container"></div>
+            <div id="corner-container"></div>
+          </div>
+          
+          <div id="map-container"></div>
         </div>
-        
-        <div id="y-density-container" class="y density plot-container">
+        <div id="figure-footers">
+          
+          <div id="scatter-footer" class="figure-footer">
+            <div class="select-container x-select-container">
+              <label for="x-select">X Variable:</label>
+              <select id="x-select"></select>
+            </div>
+            
+            <div class="select-container y-select-container">
+              <label for="y-select">Y Variable:</label>
+              <select id="y-select"></select>
+            </div>
+          </div>
+          
+          <div id="map-footer" class="figure-footer">
+            <div class="select-container map-select-container">
+              <label for="map-select">Map Variable:</label>
+              <select id="map-select"></select>
+            </div>
+            <div class="button-container map-button-container">
+              <label class="overlay-toggle-label">Neighborhood Overlay:</label>
+              <div id="overlay-toggle">
+                <input type="radio" name="overlay" value="on" id="overlayOn"><label for="overlayOn">On</label>
+                <input type="radio" name="overlay" value="off" id="overlayOff"><label for="overlayOff">Off</label>
+              </div>
+              <button id="resetMapButton" onclick="resetMap()">Reset Map</button>
+            </div>
+          </div>
+          
         </div>
-        
-        <div id="x-density-container" class="x density plot-container">
+        <div id="explanation">
+          <p>I built this as a way to explore how to visualize several dimensions of data while also geographic patterns.</p>
+          <p>You can use the handles on the density plots of the X and Y variable to restrict the scatter plot to a certain range. Doing so will also highlight the plotted points on the map by setting all tracts that are not on the scatter plot to grayscale. Use the select elements at the top to change variables; note that you can have the map showing one of the two variables on the scatter plot, or you could set it to a completely different variable.</p>
+          <p>This is still a work in progress, in particular in terms of design/prettifying!</p>
         </div>
-        
-        <div id="corner-container">
-        </div>
-      </div>
-      <div id="map-container">
-      </div>
-      
-      <div id="explanation">
-        <p>I built this as a way to explore how to visualize several dimensions of data while also geographic patterns.</p>
-        <p>You can use the handles on the density plots of the X and Y variable to restrict the scatter plot to a certain range. Doing so will also highlight the plotted points on the map by setting all tracts that are not on the scatter plot to grayscale. Use the select elements at the top to change variables; note that you can have the map showing one of the two variables on the scatter plot, or you could set it to a completely different variable.</p>
-        <p>This is still a work in progress, in particular in terms of design/prettifying!</p>
       </div>
     </div>
     
     <script type="text/javascript">
-      var mapdata, dataset, tracts, borders;
+      var mapdata, dataset, tracts, borders, neighborhoods, elevation;
       var scatter, xden, yden, map;
       var tractData;
+      var xValue, yValue, idValue, mapField, mapValue;
+      //var xSeries, ySeries, mapSeries;
       
-      // Initialize vis      
-      function generateVis() {        
-        tractData = {
-          index: [] //tracts.features.map(function(d) { return d.id; })
+      var labels = {
+          "hh_size": "Avg. # of people per household",
+          "hh_pop": "Population",
+          "foreign_pct": "Pct. foreign born (whole population)",
+          "hh": "Number of Households",
+          "badenglish_pct": 'Pct. who speak English less than "very well" (whole population)',
+          "same_house_pct": "Pct. Lived in Same House 1 Yr. Ago (whole population)",
+          "ba_grad_pct": "Pct. w/ BA or higher (population aged 25+)",
+          "disab_pct": "Pct. disabled",
+          "hs_grad_pct": "Pct. of pop 25+ y.o. w/ HS degree/GED or higher",
+          "noncitizen_pct": "Pct. Noncitizen",
+          "nonenglish_pct": "Pct. who don't speak English at home",
+          "hh_old_pct": "Pct. of Households w/ Resident Aged 65+",
+          "hh_youth_pct": "Pct. of Households w/ Resident Aged <18",
+          "fertility": "Pct. who gave birth in last 12 mo. (Women Aged 15-50)",
+          "school_pct": "Pct. in school (population aged 3+)",
+          "med_hh_inc": "Median household income",
+          "mean_hh_inc": "Mean household income",
+          "health_ins_pct": "Pct. w/ health insurance (civilian, noninstitutional population)",
+          "unemp_pct": "Pct. unemployed (population aged 16+)",
+          "poverty_pct": "Pct. below poverty line (families)",
+          "no_car_pct": "Pct. of households w/ no vehicle available",
+          "unaff_mortgage_pct": "unaff_mortgage_pct",
+          "crowded_pct": "crowded_pct",
+          "moved_in_post_2010_pct": "moved_in_post_2010_pct", 
+          "med_rooms_per_hh": "med_rooms_per_hh", 
+          "white_pct": "white_pct", 
+          "afam_pct": "afam_pct", 
+          "asian_pct": "asian_pct", 
+          "arson (rate)": "arson (rate)", 
+          "assault (rate)": "assault (rate)", 
+          "burglary (rate)": "burglary (rate)", 
+          "disorderly conduct (rate)": "disorderly conduct (rate)", 
+          "driving under the influence (rate)": "driving under the influence (rate)", 
+          "drug/narcotic (rate)": "drug/narcotic (rate)", 
+          "drunkenness (rate)": "drunkenness (rate)", 
+          "embezzlement (rate)": "embezzlement (rate)", 
+          "forgery/counterfeiting (rate)": "forgery/counterfeiting (rate)", 
+          "fraud (rate)": "fraud (rate)", 
+          "kidnapping (rate)": "kidnapping (rate)", 
+          "larceny/theft (rate)": "larceny/theft (rate)", 
+          "liquor laws (rate)": "liquor laws (rate)", 
+          "loitering (rate)": "loitering (rate)", 
+          "missing person (rate)": "missing person (rate)", 
+          "other offenses (rate)": "other offenses (rate)", 
+          "prostitution (rate)": "prostitution (rate)", 
+          "recovered vehicle (rate)": "recovered vehicle (rate)", 
+          "robbery (rate)": "robbery (rate)", 
+          "runaway (rate)": "runaway (rate)", 
+          "sex offenses, forcible (rate)": "sex offenses, forcible (rate)", 
+          "suicide (rate)": "suicide (rate)", 
+          "suspicious occ (rate)": "suspicious occ (rate)", 
+          "trespass (rate)": "trespass (rate)", 
+          "vandalism (rate)": "vandalism (rate)", 
+          "vehicle theft (rate)": "vehicle theft (rate)", 
+          "warrants (rate)": "warrants (rate)", 
+          "weapon laws (rate)": "weapon laws (rate)",
         };
         
-        for (i in tracts.features) {
-          var t = tracts.features[i];
-          //var b = borders.coordinates[i];
-          var id = "06075" + t.id; // append state ("06") and county ("075")
-          tractData[id] = t;
-          tractData.index[i] = id;
-          //tractData[id]["border"] = b;
-          tractData[id]["id"] = id;
+      var neighborhoodLabels = {
+          "Treasure Island": {
+            label: "Treasure|Island"
+          },
+          "Presidio": {
+            label: "Presidio"
+          },
+          "Castro/Upper Market": {
+            label: "Castro/|Upper Mkt",
+            y: -7,
+            x: 0
+          },
+          "Potrero Hill": {
+            label: "Potrero|Hill"
+          },
+          "Mission": {
+            label: "Mission"
+          },
+          "Downtown/Civic Center": {
+            label: "Civic|Center",
+            x: 5,
+            y: -5
+          },
+          "South of Market": {
+            label: "SoMa"
+          },
+          "Pacific Heights": {
+            label: "Pac. Hts",
+            rotate: -10
+            
+          },
+          "Marina": {
+            label: "Marina"
+          },
+          "Financial District": {
+            label: "Fin. Dist.",
+            x: 4,
+            y: -10,
+            rotate: 50
+          },
+          "Chinatown": {
+            label: "Chinatown",
+            x: 90,
+            y: 20,
+            line: true
+          },
+          "Nob Hill": {
+            label: "Nob|Hill"
+          },
+          "Russian Hill": {
+            label: "Russian|Hill",
+            rotate: 0,
+            x: 0,
+            y: -50,
+            line: true
+          },
+          "North Beach": {
+            label: "North|Beach",
+            y: -8,
+            x: -2
+          },
+          "Inner Richmond": {
+            label: "Inner|Richmond"
+          },
+          "Outer Richmond": {
+            label: "Outer|Richmond"
+          },
+          "Western Addition": {
+            label: "Western|Add.",
+            rotate: -10
+          },
+          "Hayes Valley": {
+            label: "Hayes|Valley",
+            x: 150,
+            y: 30,
+            line: true
+          },
+          "NoPa": {
+            label: "NoPa",
+            y: 5
+          },
+          "Haight": {
+            label: "Haight",
+            rotate: -30,
+            x: -7,
+            y: 5
+          },
+          "Crocker Amazon": {
+            label: "Crocker|Amazon"
+          },
+          "Visitacion Valley": {
+            label: "Visitacion|Valley"
+          },
+          "Excelsior": {
+            label: "Excelsior"
+          },
+          "Bernal Heights": {
+            label: "Bernal|Heights",
+            y: -3
+          },
+          "Twin Peaks": {
+            label: "Twin|Peaks"
+          },
+          "Noe Valley": {
+            label: "Noe|Valley"
+          },
+          "Glen Park": {
+            label: "Glen|Park",
+            y: 3
+          },
+          "Inner Sunset": {
+            label: "Inner|Sunset"
+          },
+          "Lakeshore": {
+            label: "Lakeshore"
+          },
+          "Ocean View": {
+            label: "Ocean|View",
+            y: 10
+          },
+          "West of Twin Peaks": {
+            label: "West of|Twin Peaks",
+            y: -10
+          },
+          "Outer Mission": {
+            label: "Outer|Mission",
+            y: -18,
+            x: 5
+          },
+          "Bayview": {
+            label: "Bayview"
+          },
+          "Parkside": {
+            label: "Parkside"
+          },
+          "Outer Sunset": {
+            label: "Outer|Sunset"
+          }
+        };
+        
+      
+      
+      function loadVis() {
+        $("header").css("display", "block");
+        
+        
+        $("#incidents").attr("checked", true);
+        $( "#mode-toggle" ).buttonset();
+        $("#mode-toggle").change(function() {
+          console.log("changed", $(this).children(":checked").val()); });
+        
+        
+        $("#overlayOn").attr("checked", true);
+        $( "#overlay-toggle" ).buttonset();
+        $("#overlay-toggle").change(function() {
+          var selected = $("#overlay-toggle :checked").val();
+          d3.select(".nMain").classed("hidden", selected==$("#overlayOff").val());
+        });
+        
+        
+        var loadTracts = function(callback) {
+          d3.json("geo/sf_tracts_topo.json", callback);
         }
+        
+        var loadNeighborhoods = function(callback) {
+          d3.json("geo/sf_neighborhoods_topo.json", callback);
+        };
+        
+        var loadMapData = function(callback) {
+          queue()
+            .defer(d3.json, "geo/sf_tracts_topo.json")
+            .defer(d3.json, "geo/sf_neighborhoods_topo.json")
+            //.defer(d3.json, "geo/sf_elevation_topo.json")
+            .await(function(error, tResults, nResults, eResults) {
+              mapdata = tResults;
+              neighborhoods = topojson.feature(nResults, nResults.objects.sf_neighborhoods);
+              tracts = topojson.feature(mapdata, mapdata.objects.sf_tracts);
+              //elevation = topojson.feature(eResults, eResults.objects.sf_elevation);
+              elevation = [];
+              
+              callback(error, {
+                tracts: tracts,
+                neighborhoods: neighborhoods,
+                elevation: elevation
+              });
+            });
+        };
+        var loadData = function(callback) {
+          queue()
+            .defer(d3.csv, "data/rates/inc_2012.csv")
+            .defer(d3.csv, "data/rates/res_2012.csv")
+            .defer(d3.csv, "data/rates/arr_2012.csv")
+            .await(function(error, inc, res, arr) {
+              datasets = {
+                incidents: inc,
+                resolved: res,
+                arrests: arr
+              };
+              callback(error, datasets);
+            });
+        };
+        
+        
+        
+        console.log("loading files", loadTracts);
+        q = queue()
+          .defer(loadMapData)
+          .defer(loadData)
+          .awaitAll(function(error, results) {
+            console.log("Got results");
+            console.log(results);
+            $("#loading").css("display", "none");
+            $("#main").css("display", "block");
+            //datasets = results[1]
+            
+            
+            
+            
+            tractData = {
+              index: []
+            };
+            
+            for (i in tracts.features) {
+              var t = tracts.features[i];
+              var id = "06075" + t.id; // append state ("06") and county ("075")
+              //var id = t.id;
+              tractData[id] = t;
+              tractData.index[i] = id;
+              //tractData[id]["border"] = b;
+              tractData[id]["id"] = id;
+              //tractData[id]["data"] = { };
+            }
+            
+            for (i in neighborhoods.features) {
+              var n = neighborhoods.features[i];
+              n["label"] = neighborhoodLabels[n.id];
+            }
+            generateVis("incidents");
+          });
+      }
+      
+      // Initialize vis      
+      function generateVis(series) {
+        var dataset = datasets[series];
         
         for (i in dataset) { // for each element in the dataset (from CSV)
           var t = dataset[i];
           var id = "0" + t.tract_id; // CSV ID doesn't have initial zero
           if (tractData.hasOwnProperty(id)) {
+            //tractData[id]["data"][d] = t; // add data to corresponding tract geom.
             tractData[id]["data"] = t; // add data to corresponding tract geom.
           }
         }
@@ -203,11 +474,17 @@
         
         // These functions can be used to dynamically get the right field
         // from the data.
-        var xValue = function(d, i) { return +d[xSeries]; };
-        var yValue = function(d, i) { return +d[ySeries]; };
-        var idValue = function(d, i) { return "0" + d[idSeries]; };
-        var mapField = function(d, i) { return mapSeries; };
-        var mapValue = function(d, i) { return +d['data'][mapSeries]; };
+        xValue = function(d, i) { return +d[xSeries]; };
+        yValue = function(d, i) { return +d[ySeries]; };
+        idValue = function(d, i) { return "0" + d[idSeries]; };
+        mapField = function(d, i) { return mapSeries; };
+        mapValue = function(d, i) { return +d['data'][mapSeries]; };
+        
+        // The first two digits of the tract ID are the state
+        // The next three are the county code
+        // the remainder, divided by 100, are the actual tract number
+        var tractNumber = function(id) { return parseFloat(id.slice(5)) / 100; };
+        
         
         
         /* Set up selector inputs */
@@ -230,8 +507,21 @@
           .enter()
             .append("option")
             .attr("value", function(d) { return d; })
-            .text(function(d) { return d; });
+            .attr("title", function(d) { return labels[d] || d; })
+            .attr("data-text", function(d) {
+              var varname = d;
+              var longLabel = labels[d] || d;
+              // The short label is the long label to the left of first paren.
+              //var shortLabel = longLabel.split("(")[0];
+              // If shortLabel is not whole label, add ellipsis
+              //if (longLabel.length > shortLabel.length) shortLabel += "&hellip;";
+              return "<span class='select-varname'>" + varname +
+                        ": </span><span class='select-varlabel'>" +
+                        longLabel + "</span>";
+            })
+            .text(function(d) { return d + ": " + labels[d] || d; });
             
+        
         d3.select("#x-select").node().selectedIndex = 0;
         d3.select("#y-select").node().selectedIndex = 1;
         d3.select("#map-select").node().selectedIndex = 0;
@@ -242,94 +532,45 @@
         
         
     // Map Plot
-        map = multiMap();
+        map = multiMap().plotWidth(500).plotHeight(500).legendSize(50);
         
         d3.select("#map-container")
-          .datum(tractData)
+          .datum([tractData, neighborhoods, elevation])
           .call(map);
         
-        /*var mapTooltip = d3.tip()
-                        .attr('class', 'tooltip tooltip-map')
-                        .html(function(d) {
-                          console.log(d);
-                          var result =
-                            "<ul class='tooltip-list'>" +
-                              "<li><span class='label label-id'>" + idSeries + ":</span>" + idValue(d) + "</li>" +
-                              "<li><span class='label label-x'>" + mapSeries + ":</span> " + mapValue(d) + "</li>" +
-                            "</ul>";
-                          return result;
-                        });*/
-                        
-        /*d3.select("#map-container .main-svg").call(mapTooltip);*/
-        var mapTooltip = d3.select('#map-container')
-                            .append("div")
-                              .attr("class", "tooltip tooltip-map")
-                              .style("z-index", 10)
-                              .style("visibility", "hidden")
-                              .style("position", "absolute")
-                              .text("tooltip");
+        var mapTooltip = Tooltip().direction("n");
+        //console.log(tractData);
         
+        // Set custom tooltip directions for weird tracts
+        tractData["06075017902"].direction = "e"; // Tresure island, and two tiny pieces near bayview
+        tractData["06075060100"].direction = "e"; // Presidio
         
-        map.addFeatureListener("mouseover", function(d, i) {
-          //that.parentNode.appendChild(that);
-          //console.log("EXT MOUSOVER", d3.selectAll(".tract-" + d.id));
-          d3.selectAll(".tract-" + d.id)
-            .classed("selected", true).each(function() {
-              this.parentNode.appendChild(this); });
-          mapTooltip.show(d);
-        }).addFeatureListener("mouseout", function(d, i) {
-          //console.log("MOUSOUT", d);
-          //if (typeof d.data !== "undefined")
-            d3.selectAll(".tract-" + d.id) //idValue(d.data))
-              .classed("selected", false);
-            mapTooltip.hide(d);
-        });
+        d3.select("#map-container")
+          .call(mapTooltip);
         
+
     // Scatter Plot
         scatter = scatterPlot().plotWidth(400).plotHeight(400)
           .xValue(function(d, i) { return +d[xSeries]; })
           .yValue(function(d, i) { return +d[ySeries]; })
-          .idValue(function(d, i) { return "0" + d[idSeries]; });
+          .idValue(function(d, i) { return "0" + d[idSeries]; })
+          .xAxisLabelText(labels[xSeries])
+          .yAxisLabelText(labels[ySeries])
+          .margin({top: 20, right: 10, bottom: 50, left: 60});
         
         d3.select("#scatter-container")
             .datum(data)
             .call(scatter);
         
-        var scatterToolip = d3.tip()
-                            .attr('class', 'tooltip tooltip-scatter')
-                            .html(function(d) {
-                              console.log(d);
-                              var result =
-                                "<ul class='tooltip-list'>" +
-                                  "<li><span class='var var-id'>" + idSeries + ":</span>" + idValue(d) + "</li>" +
-                                  "<li><span class='var var-x'>" + xSeries + ":</span> " + xValue(d) + "</li>" +
-                                  "<li><span class='var var-y'>" + ySeries + ":</span> " + yValue(d) + "</li>" +
-                                "</ul>";
-                              return result;
-                            });
-                            
-        d3.select("#scatter-container .main-svg").call(scatterToolip);
-        
-        scatter.addMarkerListener("mouseover", function(d, i) {
-          d3.select("#info").text("x: " + xValue(d) + " y: " + yValue(d) + " id: " + idValue(d));
-          map.svg().selectAll(".tract-" + idValue(d))
-            .each(function(d, i) {
-              map.triggerFeatureListener("mouseover", d, i, this) });
-          d3.selectAll(".tract-" + idValue(d)).classed("selected", true);
-          scatterToolip.show(d);
-          mapTooltip.show(d);
-        });
-        scatter.addMarkerListener("mouseout", function(d, i) {
-          d3.selectAll(".tract-" + idValue(d)).classed("selected", false);
-          scatterToolip.hide(d);
-          mapTooltip.hide(d);
-        });
-        
-        
-        
+        var scatterTooltip = Tooltip();
+        d3.select("#scatter-container")
+          .call(scatterTooltip);
+    
+    
     // X-density Plot
         xden = densityPlot().plotWidth(400).plotHeight(100)
-          .getValue(xValue);
+          .getValue(xValue)
+          .margin({top: 0, right: 10, bottom: 50, left: 60});
           
         d3.select("#x-density-container")
           .datum(data)
@@ -344,6 +585,7 @@
           scatter.updateMarkerPositions(true);
         });
         
+        
     // Y-density Plot
         yden = densityPlot().plotWidth(100).plotHeight(400)
           .getValue(function(d) {
@@ -351,7 +593,8 @@
           })
           .showAxes("y")
           .flipAxis(true)
-          .orientation("vertical");
+          .orientation("vertical")
+          .margin({top: 0, right: 20, bottom:50, left: 50});
           
         d3.select("#y-density-container")
           .datum(data)
@@ -366,50 +609,98 @@
           scatter.updateMarkerPositions(true);
         });
         
-    
-        
-        
-        // Variable selectors
-        
-        d3.selectAll("select")
-          .on("change", function(a, d, i) {
-              if (d3.event.target.id === "x-select") {
-                xSeries = d3.event.target.value;
-                scatter.updateData().updatePlot();
-                xden.getValue(xValue).updateData().updatePlot();
-              }
-              if (d3.event.target.id === "y-select") {
-                ySeries = d3.event.target.value;
-                scatter.updateData().updatePlot();
-                yden.getValue(yValue).updateData().updatePlot();
-              }
-              if (d3.event.target.id === "map-select") {
-                mapSeries = d3.event.target.value;
-                map.field(mapField);
-                map.updateData().updateMap();
-                scatter.updateMarkerPositions();
-              }
-          })
+    // Map/Scatter Listeners
+        map.addFeatureListener("mouseover", function(d, i) {
+          //that.parentNode.appendChild(that);
+          //console.log("EXT MOUSOVER", d3.selectAll(".tract-" + d.id));
+          d3.selectAll(".tract-" + d.id)
+            .classed("selected", true).each(function() {
+              this.parentNode.appendChild(this); });
+            
+          // Show scatter tooltip
+          scatter.svg().selectAll(".tract-" + d.id).each(function(d, i) {
+            scatterTooltip.show(this, [[{"var var-id": idSeries},
+                                        {"spacer": ": "},
+                                       {"value value-id": tractNumber(idValue(d))}],
+                                      [{"var var-x": xSeries},
+                                       {"spacer": ": "},
+                                       {"value value-x": xValue(d)}],
+                                      [{"var var-y": ySeries},
+                                       {"spacer": ": "},
+                                       {"value value-y": yValue(d)}]]);
+          });
           
-      }
-      
-      var loadedCSV = function(error, result) {
-        console.log("Loaded CSV");
-      };
-      var loadedJSON = function(error, result) {
-        console.log("Loaded JSON");
-      };
-      queue()
-        //.defer(d3.json, "geo/sf_tracts_topo_small.json")
-        .defer(d3.json, "geo/gz_2010_06_140_00_500k/sf_tracts_full_topo.json")
-        .defer(d3.csv, "data/rates/inc_2012.csv")
-        .awaitAll(function(error, results) {
-          mapdata = results[0];
-          dataset = results[1];
-          tracts = topojson.feature(mapdata, mapdata.objects.sf_tracts);
-          generateVis()
+          mapTooltip.show(this, [[{"var var-id": idSeries},
+                                  {"spacer": ": "},
+                                  {"value value-id": tractNumber(d.id) }],
+                                 [{"var var-map": mapSeries},
+                                  {"spacer": ": "},
+                                  {"value value-map": mapValue(d)}]]);
         });
         
+        map.addFeatureListener("mouseout", function(d, i) {
+          d3.selectAll(".tract-" + d.id) //idValue(d.data))
+            .classed("selected", false);
+          scatterTooltip.hide();
+          mapTooltip.hide();
+        });
+        map.addFeatureListener("click", function(d, i) {
+          console.log("clicked");
+          map.clicked(d);
+        });
+        
+        
+        scatter.addMarkerListener("mouseover", function(d, i) {
+          d3.select("#info").text("x: " + xValue(d) + " y: " + yValue(d) + " id: " + idValue(d));
+          map.svg().selectAll(".tract-" + idValue(d))
+            .each(function(d, i) {
+              map.triggerFeatureListener("mouseover", d, i, this) });
+          
+          d3.selectAll(".tract-" + idValue(d)).classed("selected", true);
+          scatterTooltip.show(this, [[{"var var-id": idSeries},
+                                      {"spacer": ": "},
+                                      {"value value-id": tractNumber(idValue(d))}],
+                                     [{"var var-x": xSeries},
+                                      {"spacer": ": "},
+                                      {"value value-x": xValue(d)}],
+                                     [{"var var-y": ySeries},
+                                      {"spacer": ": "},
+                                      {"value value-y": yValue(d)}]]);
+          
+        });                
+        scatter.addMarkerListener("mouseout", function(d, i) {
+          map.svg().selectAll(".tract-" + idValue(d))
+            .each(function(d, i) {
+              map.triggerFeatureListener("mouseout", d, i, this) });
+          d3.selectAll(".tract-" + idValue(d)).classed("selected", false);
+          scatterTooltip.hide();
+        });
+        
+        // Variable selectors
+        $("#x-select").on("change", function( event ) {
+          xSeries = event.target.value;
+          scatter.xAxisLabelText(labels[xSeries]).updateData().updatePlot();
+          xden.getValue(xValue) // change getValue function
+              .updateData().updatePlot(); // update plot
+        });
+        $("#y-select").on("change", function( event ) {
+          ySeries = event.target.value;
+          scatter.yAxisLabelText(labels[ySeries]).updateData().updatePlot();
+          yden.getValue(yValue) // change getValue function
+              .updateData().updatePlot(); // update plot
+        });
+        $("#map-select").on("change", function( event ) {
+          mapSeries = event.target.value;
+          map.field(mapField);
+          map.updateMap();
+        });
+        
+        $("select").selectBoxIt({ native: false });
+      }
+      
+      function resetMap() {
+        map.resetZoom();
+      } 
     </script>
   </body>
 </html>

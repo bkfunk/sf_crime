@@ -8,24 +8,25 @@
   fill: url("#diagonalHatch");
 }
 .neighborhood {
-  stroke: #0000ff;
+  stroke: #0000e6;
   stroke-width: 1;
   fill: none;
   pointer-events: none;
-  opacity: .8;
+  opacity: .6;
 }
 .nMain text {
-  fill: #0000ff;
+  fill: #0000e6;
   font-family: 'Noto Sans', sans-serif;
   font-size: .5em;
   text-anchor: middle;
   pointer-events: none;
+  opacity: 1;
 }
 .nMain text.lineLabel {
   text-anchor: start;
 }
 .nMain line {
-  stroke: #0000ff;
+  stroke: #0000e6;
   stroke-width: 1;
   fill: none;
   opacity: .7;
@@ -148,7 +149,7 @@
 .tract:hover,
 .tract.selected {
   stroke: #ff0000;
-  stroke-width: 2;
+  stroke-width: 3;
 }
 /******************
  *    SCATTER     *
@@ -158,7 +159,7 @@ circle {
   fill-opacity: .4;
   stroke: darkblue;
   stroke-opacity: .6;
-  opacity: .3;
+  opacity: .5;
 }
 circle:hover,
 circle.selected {
@@ -190,7 +191,7 @@ svg {
   stroke-width: 1px;
 }
 .area {
-  fill: lightblue;
+  fill: lightskyblue;
   stroke-width: 0;
   fill-opacity: .5;
 }
@@ -203,7 +204,8 @@ svg {
 }
 .brush .extent {
   stroke: steelblue;
-  fill-opacity: .125;
+  fill: #666;
+  fill-opacity: .1;
   shape-rendering: crispEdges;
 }
 /* Tooltips */
@@ -416,7 +418,7 @@ svg {
   font-size: 0.8em;
 }
 .ui-button {
-  background: #999999;
+  background: #cccccc;
   font-family: 'Noto Sans', sans-serif;
   font-size: 0.8em;
   border-left: 1px solid #666666;
@@ -441,7 +443,7 @@ svg {
   border-right: none;
 }
 .ui-button.ui-state-active {
-  background: #0000ff;
+  background: #95c8dd;
 }
 .figure-footer .ui-buttonset {
   display: inline;

@@ -11,13 +11,13 @@
   fill: url("#diagonalHatch"); // will be overwritten when there is data available
 }
 
-@neighborhood-color: blue;
+@neighborhood-color: lighten(navy, 20%);
 .neighborhood {
     stroke: @neighborhood-color;
     stroke-width: 1;
     fill: none;
     pointer-events: none;
-    opacity: .8;
+    opacity: .6;
 }
 .nMain text {
     fill: @neighborhood-color;
@@ -25,6 +25,10 @@
     font-size: .5em;
     text-anchor: middle;
     pointer-events: none;
+    //stroke: #AAA;
+    //stroke-opacity: .6;
+    
+    opacity: 1;
 }
 .nMain text.lineLabel {
     text-anchor: start;
@@ -112,7 +116,7 @@
 .tract:hover,
 .tract.selected {
   stroke: @highlight-stroke-color;
-  stroke-width: 2;
+  stroke-width: 3;
 }
 
 
@@ -126,7 +130,7 @@ circle {
   fill-opacity: .4;
   stroke: darkblue;
   stroke-opacity: .6;
-  opacity: .3;
+  opacity: .5;
 }
 circle:hover,
 circle.selected {
@@ -162,7 +166,7 @@ svg {
 }
 
 .area {
-  fill: lightblue;
+  fill: lightskyblue;
   stroke-width: 0;
   fill-opacity: .5;
 }
@@ -177,6 +181,7 @@ svg {
 
 .brush .extent {
   stroke: steelblue;
-  fill-opacity: .125;
+  fill: #666;
+  fill-opacity: .1;
   shape-rendering: crispEdges;
 }

@@ -53,91 +53,6 @@
         return f + "(" + args + ")";
       }
       
-      function extractField(dataset, fieldName) {
-        // Create field object, starting with the label
-        var field = { label: fieldName };
-        
-        // Create an array of numeric (float) values
-        field.values = dataset.map(function(d) {
-          return parseFloat(d[fieldName]);
-        });
-        
-        // Create an array of string values
-        field.stringValues = dataset.map(function(d) {
-          return d[fieldName];
-        });
-        
-        // Create minimum and maximum functions for the field
-        // This is just a shorthand.
-        field.getMin = function() { return d3.min(field.values); };
-        field.getMax = function() { return d3.max(field.values); };
-        
-        // Unlike the overall min/max, the selected min/max are set by us,
-        // so they don't need to be functions, since they don't reflect the
-        // dynamic state of the data
-        field.selected = {
-          min: field.getMin(),
-          max: field.getMax()
-        };
-        
-        // The function to select for values
-        field.selected.selector = function(element) {
-          return (element >= field.selected.min && element <= field.selected.max)
-        };
-        
-        // A function returning the selected values
-        /*field.selected.getValues = function() {
-          return field.values.filter(field.selected.selector);
-        };*/
-        
-        return field;
-      }
-      
-      rotateElement = function(element, angle) {
-        
-        // NOTE Rotate cannot be chained
-        var width = element.offsetWidth;
-        var height = element.offsetHeight;
-        var selection = d3.select(element);
-        
-        // modulo out full rotations and convert to radians
-        angle = angle % 360;
-        theta = angle * (Math.PI / 180);
-        //var H = height * Math.cos(theta) + width * Math.sin(theta);
-        //var W = height * Math.sin(theta) + width * Math.cos(theta);
-        //var H = height * Math.sin(theta);
-        //var W = width  * Math.cos(theta);
-        if (0 <= angle && angle < 90) {
-          var dx = height * Math.sin(theta);
-          var dy = 0;
-          //var H = height * Math.cos(theta) + width * Math.sin(theta);
-          //var W = height * Math.sin(theta) + width * Math.cos(theta);
-        
-        } else if (90 <= angle && angle < 180) {
-          var dx = -width * Math.cos(theta) + height * Math.sin(theta);
-          var dy = -height * Math.cos(theta);
-          //var H = height * Math.cos(theta) - width * Math.sin(theta);
-          //var W = height * Math.sin(theta) - width * Math.cos(theta);
-        } else if (180 <= angle && angle < 270) {
-          var dx = -width * Math.cos(theta);
-          var dy = -width * Math.sin(theta) - height * Math.cos(theta);
-          //var H = height * Math.cos(theta) + width * Math.sin(theta);
-          //var W = height * Math.sin(theta) + width * Math.cos(theta);
-        } else {
-          var dx = 0;
-          var dy = -width * Math.sin(theta);
-          //var H = height * Math.cos(theta) - width * Math.sin(theta);
-          //var W = height * Math.sin(theta) - width * Math.cos(theta);
-          
-        }
-        
-        //wScale = Math.abs(W / width);
-        //hScale = Math.abs(H / height);
-        selection.attr("transform", _do("translate", dx, dy) + " "
-                           + _do("rotate", angle));
-        return {"dx" : dx, "dy" : dy};
-      };
-      
       
       function getOffsetRect(elem) {
           // Get bounding box (doesn't take scroll into consideration)
@@ -533,43 +448,7 @@
               var n = neighborhoods.features[i];
               n["label"] = neighborhoodLabels[n.id];
             }
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
             generateVis("incidents");
-            
-            /*xSeries = d3.select("#x-select").node().value;
-            ySeries = d3.select("#y-select").node().value;
-            mapSeries = d3.select("#map-select").node().value;*/
-            /*
-            
-            // Variable selectors
-            $("#x-select").on("change", function( event ) {
-              xSeries = event.target.value;
-              scatter.xAxisLabelText(labels[xSeries]).updateData().updatePlot();
-              xden.getValue(xValue) // change getValue function
-                  .updateData().updatePlot(); // update plot
-            });
-            $("#y-select").on("change", function( event ) {
-              ySeries = event.target.value;
-              scatter.yAxisLabelText(labels[ySeries]).updateData().updatePlot();
-              yden.getValue(yValue) // change getValue function
-                  .updateData().updatePlot(); // update plot
-            });
-            $("#map-select").on("change", function( event ) {
-              mapSeries = event.target.value;
-              map.field(mapField);
-              map.updateMap();
-              //scatter.updateMarkerPositions();
-            });*/
           });
       }
       

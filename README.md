@@ -18,7 +18,7 @@ The data cleaning scripts are located in the [`/scripts/`](https://github.com/bk
   Currently, I only look at the incidents file (`inc_2012`)
 
 ## Visualizing the Data
-I create some plot templates (located in [`lib/charts/`](https://github.com/bkfunk/sf_data_traction/tree/master/lib/charts)) to ease plotting. `crimestats.html` uses these templates to create a scatter plot, a brush-able distribution plot for each axis on the scatter, and a map showing a choropleth of the data.
+I create some plot templates (located in [`src/js/charts/`](https://github.com/bkfunk/sf_data_traction/tree/master/src/js/charts)) to ease plotting. `crimestats.html` uses these templates to create a scatter plot, a brush-able distribution plot for each axis on the scatter, and a map showing a choropleth of the data.
 
 I got a shapefile for the SF Census Tracts from the [US Census site](http://www2.census.gov/geo/tiger/GENZ2010/gz_2010_06_140_00_500k.zip). I then converted the shapefile to TopoJSON using the `bin/create_topojson` bash script. I load that TopoJSON file, along with the incidents data, into d3, and merge those two in the javascript so that both geo data and the incident data are bound to each tract element.
 

@@ -63,7 +63,7 @@ Currently, I only look at the incidents file (<code>inc_2012</code>)</li>
 </ul><h2>
 <a name="visualizing-the-data" class="anchor" href="#visualizing-the-data"><span class="octicon octicon-link"></span></a>Visualizing the Data</h2>
 
-<p>I create some plot templates (located in <a href="https://github.com/bkfunk/sf_data_traction/tree/master/lib/charts"><code>lib/charts/</code></a>) to ease plotting. <code>crimestats.html</code> uses these templates to create a scatter plot, a brush-able distribution plot for each axis on the scatter, and a map showing a choropleth of the data.</p>
+<p>I create some plot templates (located in <a href="https://github.com/bkfunk/sf_data_traction/tree/master/src/js/charts"><code>src/js/charts/</code></a>) to ease plotting. <code>crimestats.html</code> uses these templates to create a scatter plot, a brush-able distribution plot for each axis on the scatter, and a map showing a choropleth of the data.</p>
 
 <p>I got a shapefile for the SF Census Tracts from the <a href="http://www2.census.gov/geo/tiger/GENZ2010/gz_2010_06_140_00_500k.zip">US Census site</a>. I then converted the shapefile to TopoJSON using the <code>bin/create_topojson</code> bash script. I load that TopoJSON file, along with the incidents data, into d3, and merge those two in the javascript so that both geo data and the incident data are bound to each tract element.</p>
 
@@ -79,7 +79,7 @@ Currently, I only look at the incidents file (<code>inc_2012</code>)</li>
 
 <p>The d3 code is intentionally pretty agnostic about the precise nature of the data. In order to reuse the visualization with different data, you would just need to get other census-tract-level data with a "tract_id" and another TopoJSON file with the tracts for a different city or region. With a little modification, you could use any type of data associated with any type of map boundary.</p>
 
-<p><a>*</a><strong>NB</strong>: Per the dataset owner's post in the discussion on the <a href="https://data.sfgov.org/Public-Safety/SFPD-Reported-Incidents-2003-to-Present/dyj4-n68b">data site</a>, "The only data not included in this database is the homicide data."</p>
+<p>*<strong>NB</strong>: Per the dataset owner's post in the discussion on the <a href="https://data.sfgov.org/Public-Safety/SFPD-Reported-Incidents-2003-to-Present/dyj4-n68b">data site</a>, "The only data not included in this database is the homicide data."</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/bkfunk">bkfunk</a></p>
@@ -87,5 +87,6 @@ Currently, I only look at the incidents file (<code>inc_2012</code>)</li>
       </footer>
     </div>
     <script src="javascripts/scale.fix.js"></script>
+    
   </body>
 </html>

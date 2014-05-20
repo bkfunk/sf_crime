@@ -1,7 +1,8 @@
 #!bin/bash
 
 #shpfile="geo/tl_2010_06_tract10/tl_2010_06_tract10.shp"
-shpfile="geo/gz_2010_06_140_00_500k/gz_2010_06_140_00_500k.shp"
+#shpfile="geo/gz_2010_06_140_00_500k/gz_2010_06_140_00_500k.shp"
+shpfile="geo/gz_2010_06_140_00_500k/gz_2010_06_140_00_500k_simple.shp"
 jsonfile="geo/sf_tracts.json"
 topojsonfile="geo/sf_tracts_topo.json"
 small_topojsonfile="geo/sf_tracts_topo_small.json"
@@ -60,7 +61,7 @@ shpfile_n="geo/gz_2010_06_140_00_500k/neighborhoods.shp"
 jsonfile_n="geo/sf_neighborhoods.json"
 topojsonfile_n="geo/sf_neighborhoods_topo.json"
 
-rm $jsonfile_n || echo "Could not remove file, may not exist: $jsonfile2"
+rm $jsonfile_n || echo "Could not remove file, may not exist: $jsonfile"
 ogrinfo $shpfile_n -al -so
 
 ogr2ogr \
@@ -72,6 +73,26 @@ ogr2ogr \
 topojson \
   --id-property neighborho \
   -p TRACT,NAME,CENSUSAREA \
+  --simplify-proportion .5 \
+  -o $topojsonfile_n \
+  $jsonfile_n
+
+# Elevations
+shpfile_n="geo/phys_contours_wgs/sf_elevation_100.shp"
+jsonfile_n="geo/sf_elevation.json"
+topojsonfile_n="geo/sf_elevation_topo.json"
+
+rm $jsonfile_n || echo "Could not remove file, may not exist: $jsonfile"
+ogrinfo $shpfile_n -al -so
+
+ogr2ogr \
+  -f GeoJSON \
+  -t_srs EPSG:4326 \
+  $jsonfile_n \
+  $shpfile_n
+
+topojson \
+  --id-property ELEVATION \
   --simplify-proportion .5 \
   -o $topojsonfile_n \
   $jsonfile_n

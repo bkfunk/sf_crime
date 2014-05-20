@@ -8,16 +8,17 @@ function multiMap() {
       mapWidth, mapHeight;
   
   var projection,
-      path, nPath,
+      path, nPath, ePath,
       colorScale,
       quantScale,
       svg,
       mapContainer,
-      main, nMain, mapGroup,
+      main, nMain, eMain,
+      mapGroup,
       legend, legendHeader, legendBody, legendAxisg,
       features, nFeatures,
       dataIn,
-      tracts, neighborhoods,
+      tracts, neighborhoods, elevation,
       featureListeners = { },
       baseZoom = 318,
       mapCreated = false;
@@ -60,11 +61,12 @@ function multiMap() {
   
   function createMap(selection) {
     projection = d3.geo.mercator()
-                        .center([-122.4391, 37.7671]);
+                        .center([-122.4391, 37.7701]);
     quantScale = d3.scale.quantize();
     
     path = d3.geo.path();
     nPath = d3.geo.path();
+    ePath = d3.geo.path();
                  
     svg = selection.append("svg").attr("class", "main-svg");
     
@@ -96,7 +98,7 @@ function multiMap() {
     
     main = mapGroup.append("g").attr("class", "main").attr("clip-path", "url(#map-clip-path)");
     nMain = mapGroup.append("g").attr("class", "nMain").attr("clip-path", "url(#map-clip-path)");
-    
+    eMain = mapGroup.append("g").attr("class", "eMain").attr("clip-path", "url(#map-clip-path)");
     
     legend = mapContainer.append("g").attr("class", "legend");
     legendHeader = legend.append("g").attr("class", "legend-header");
@@ -116,6 +118,7 @@ function multiMap() {
     
     features = featureArray(dataIn[0]);
     nFeatures = dataIn[1];
+    elevation = dataIn[2];
     
     return map;
   };
@@ -169,6 +172,22 @@ function multiMap() {
         
     
     map.updateNeighborhoods();
+    
+    /*
+    eScale = d3.scale.quantize().range(d3.range(nColors))
+                  .domain(d3.extent(elevation.features.map(function(d) { return Math.round(d.id / 100); })));
+    ePath.projection(projection);
+    eMain.selectAll("path")
+      .data(elevation.features)
+      .enter().append("path")
+        .style("fill", "none")
+        .style("opacity", .8)
+        .attr("class", function(d, i) {
+          var e = Math.round(d.id / 100);
+          return "elev q" + eScale(e) + "-" + nColors;
+        })
+        .attr("d", ePath);*/
+    
     return map;
   };
   

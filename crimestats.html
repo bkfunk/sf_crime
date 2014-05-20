@@ -227,9 +227,11 @@
     </div>
     
     <script type="text/javascript">
-      var mapdata, dataset, tracts, borders, neighborhoods;
+      var mapdata, dataset, tracts, borders, neighborhoods, elevation;
       var scatter, xden, yden, map;
       var tractData;
+      var xValue, yValue, idValue, mapField, mapValue;
+      //var xSeries, ySeries, mapSeries;
       
       var labels = {
           "hh_size": "Avg. # of people per household",
@@ -431,19 +433,6 @@
         };
         
       
-      /*
-      var loadedCSV = function(error, result) {
-        console.log("Loaded CSV");
-      };
-      var loadedJSON = function(error, result) {
-        console.log("Loaded JSON");
-      };*/
-      
-      var loadedIncidents = false;
-      var loadedResolved = false;
-      var loadedArrests = false;
-      var loadedTracts = false;
-      var loadedNeighborhoods =false;
       
       function loadVis() {
         $("header").css("display", "block");
@@ -478,14 +467,18 @@
           queue()
             .defer(d3.json, "geo/sf_tracts_topo.json")
             .defer(d3.json, "geo/sf_neighborhoods_topo.json")
-            .await(function(error, tResults, nResults) {
+            //.defer(d3.json, "geo/sf_elevation_topo.json")
+            .await(function(error, tResults, nResults, eResults) {
               mapdata = tResults;
               neighborhoods = topojson.feature(nResults, nResults.objects.sf_neighborhoods);
               tracts = topojson.feature(mapdata, mapdata.objects.sf_tracts);
+              //elevation = topojson.feature(eResults, eResults.objects.sf_elevation);
+              elevation = [];
               
               callback(error, {
                 tracts: tracts,
-                neighborhoods: neighborhoods
+                neighborhoods: neighborhoods,
+                elevation: elevation
               });
             });
         };
@@ -516,38 +509,84 @@
             $("#loading").css("display", "none");
             $("#main").css("display", "block");
             //datasets = results[1]
-            generateVis();
-          });
-        /*
-        
-        queue()
-          .defer(queue()
-            .defer(d3.json, "geo/sf_tracts_topo.json")
-            .defer(d3.json, "geo/sf_neighborhoods_topo.json")
-            .await,
-            (function(error, tResults, nResults) {
-              console.log(tResults, nResults);
-              mapdata = tResults;
-              neighborhoods = topojson.feature(nResults, nResults.objects.sf_neighborhoods);
-              tracts = topojson.feature(mapdata, mapdata.objects.sf_tracts);
             
-            }))
-          //.defer(d3.json, "geo/gz_2010_06_140_00_500k/sf_tracts_full_topo.json")
-          .defer(d3.csv, "data/rates/inc_2012.csv")
-          .awaitAll(function(error, results) {
-            console.log(results);
-            $("#loading").css("display", "none");
-            $("#main").css("display", "block");
-            mapdata = results[0];
-            dataset = results[1];
-            generateVis();
-          });*/
+            
+            
+            
+            tractData = {
+              index: [] //tracts.features.map(function(d) { return d.id; })
+            };
+            
+            for (i in tracts.features) {
+              var t = tracts.features[i];
+              //var b = borders.coordinates[i];
+              var id = "06075" + t.id; // append state ("06") and county ("075")
+              //var id = t.id;
+              tractData[id] = t;
+              tractData.index[i] = id;
+              //tractData[id]["border"] = b;
+              tractData[id]["id"] = id;
+              //tractData[id]["data"] = { };
+            }
+            
+            for (i in neighborhoods.features) {
+              var n = neighborhoods.features[i];
+              n["label"] = neighborhoodLabels[n.id];
+            }
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            generateVis("incidents");
+            
+            
+            //$("select").selectBoxIt({ native: false });
+            /*
+            d3.select("#x-select").node().selectedIndex = 0;
+            d3.select("#y-select").node().selectedIndex = 1;
+            d3.select("#map-select").node().selectedIndex = 0;
+            */
+            /*xSeries = d3.select("#x-select").node().value;
+            ySeries = d3.select("#y-select").node().value;
+            mapSeries = d3.select("#map-select").node().value;*/
+            /*
+            
+            // Variable selectors
+            $("#x-select").on("change", function( event ) {
+              xSeries = event.target.value;
+              scatter.xAxisLabelText(labels[xSeries]).updateData().updatePlot();
+              xden.getValue(xValue) // change getValue function
+                  .updateData().updatePlot(); // update plot
+            });
+            $("#y-select").on("change", function( event ) {
+              ySeries = event.target.value;
+              scatter.yAxisLabelText(labels[ySeries]).updateData().updatePlot();
+              yden.getValue(yValue) // change getValue function
+                  .updateData().updatePlot(); // update plot
+            });
+            $("#map-select").on("change", function( event ) {
+              mapSeries = event.target.value;
+              map.field(mapField);
+              map.updateMap();
+              //scatter.updateMarkerPositions();
+            });*/
+          });
       }
       
       
       
       // Initialize vis      
-      function generateVis() {        
+      function generateVis(series) {
+        var dataset = datasets[series];
+        
+        /*
         tractData = {
           index: [] //tracts.features.map(function(d) { return d.id; })
         };
@@ -568,10 +607,10 @@
           var n = neighborhoods.features[i];
           n["label"] = neighborhoodLabels[n.id];
         }
-        
+        */
         //for (d in datasets) {
-          for (i in datasets["incidents"]) { // for each element in the dataset (from CSV)
-            var t = datasets["incidents"][i];
+          for (i in dataset) { // for each element in the dataset (from CSV)
+            var t = dataset[i];
             var id = "0" + t.tract_id; // CSV ID doesn't have initial zero
             if (tractData.hasOwnProperty(id)) {
               //tractData[id]["data"][d] = t; // add data to corresponding tract geom.
@@ -596,6 +635,7 @@
         //for (i in tractData["06075980300"].data) {
         //  tractData["06075980300"].data[i] = undefined;
         //}
+        console.log(tractData);
         tractData["06075980300"].data = undefined; // Golden Gate Park! Numbers are all weird, so we exclude it.
         
         data = tractData.index.map(function (t) { // get the data attribute
@@ -609,14 +649,14 @@
         
         // These functions can be used to dynamically get the right field
         // from the data.
-        var dataSeries = function() {
+        /*var dataSeries = function() {
           return $("mode-toggle :checked").val() || "incidents";
-        }
-        var xValue = function(d, i) { /*console.log(d, i, dataSeries());*/ return +d[xSeries]; };
-        var yValue = function(d, i) { return +d[ySeries]; };
-        var idValue = function(d, i) { return "0" + d[idSeries]; };
-        var mapField = function(d, i) { return mapSeries; };
-        var mapValue = function(d, i) { return +d['data'][mapSeries]; };
+        }*/
+        xValue = function(d, i) { /*console.log(d, i, dataSeries());*/ return +d[xSeries]; };
+        yValue = function(d, i) { return +d[ySeries]; };
+        idValue = function(d, i) { return "0" + d[idSeries]; };
+        mapField = function(d, i) { return mapSeries; };
+        mapValue = function(d, i) { return +d['data'][mapSeries]; };
         
         // The first two digits of the tract ID are the state
         // The next three are the county code
@@ -660,6 +700,7 @@
             })
             .text(function(d) { return d + ": " + labels[d] || d; });
             
+        
         d3.select("#x-select").node().selectedIndex = 0;
         d3.select("#y-select").node().selectedIndex = 1;
         d3.select("#map-select").node().selectedIndex = 0;
@@ -673,7 +714,7 @@
         map = multiMap().plotWidth(500).plotHeight(500).legendSize(50);
         
         d3.select("#map-container")
-          .datum([tractData, neighborhoods])
+          .datum([tractData, neighborhoods, elevation])
           .call(map);
         
         var mapTooltip = Tooltip().direction("n");
@@ -844,6 +885,8 @@
           map.updateMap();
           //scatter.updateMarkerPositions();
         });
+        
+        
         /*d3.selectAll("select")
           .on("change", function(a, d, i) {
               if (d3.event.target.id === "x-select") {
@@ -863,6 +906,7 @@
                 scatter.updateMarkerPositions();
               }
           })*/
+          //
           $("select").selectBoxIt({ native: false });
       }
       

@@ -68,16 +68,34 @@
 .plotted.q8-9 {
   fill: #00441b;
 }
-/*BLUES
-.tract.q0-9{fill:rgb(247,251,255)}
-.tract.q1-9{fill:rgb(222,235,247)}
-.tract.q2-9{fill:rgb(198,219,239)}
-.tract.q3-9{fill:rgb(158,202,225)}
-.tract.q4-9{fill:rgb(107,174,214)}
-.tract.q5-9{fill:rgb(66,146,198)}
-.tract.q6-9{fill:rgb(33,113,181)}
-.tract.q7-9{fill:rgb(8,81,156)}
-.tract.q8-9{fill:rgb(8,48,107)}*/
+/* BLUES */
+.elev.q0-9 {
+  stroke: #f7fbff;
+}
+.elev.q1-9 {
+  stroke: #deebf7;
+}
+.elev.q2-9 {
+  stroke: #c6dbef;
+}
+.elev.q3-9 {
+  stroke: #9ecae1;
+}
+.elev.q4-9 {
+  stroke: #6baed6;
+}
+.elev.q5-9 {
+  stroke: #4292c6;
+}
+.elev.q6-9 {
+  stroke: #2171b5;
+}
+.elev.q7-9 {
+  stroke: #08519c;
+}
+.elev.q8-9 {
+  stroke: #08306b;
+}
 /* Greys */
 .q0-9 {
   fill: #ffffff;
@@ -441,6 +459,9 @@ svg {
   height: 1.2em;
   line-height: 1.2em;
   font-size: 0.8em;
+}
+#mode-toggle {
+  display: none;
 }
 header {
   margin: 0;
